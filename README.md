@@ -18,11 +18,11 @@ Dokumen ini berisi detail perencanaan kerja individu dan kelompok untuk pengemba
 
 | Individu | Tugas Kunci | Keterangan / Fokus |
 |---------|-------------|--------------------|
-| A | **Membuat Design System** | Menyiapkan panduan dan komponen desain dasar. |
-| B | **Menginisiasi Flutter Project** | Setup awal proyek Flutter dan struktur folder. |
-| C | **Membuat Deskripsi Github** | Menulis deskripsi proyek dan petunjuk dasar di `README.md`. |
-| D | **Membuat API Auth** | Mengembangkan endpoint untuk Login/Register. |
-| E | **Membuat API Fitur 1** | Mengembangkan endpoint untuk fitur utama pertama. |
+| Yafi | **Membuat Design System** | Menyiapkan panduan dan komponen desain dasar. |
+| Rusydan | **Menginisiasi Flutter Project** | Setup awal proyek Flutter dan struktur folder. |
+| Rusydan | **Membuat Deskripsi Github** | Menulis deskripsi proyek dan petunjuk dasar di `README.md`. |
+| Yafi | **Membuat API Auth** | Mengembangkan endpoint untuk Login/Register. |
+| Derriel | **Membuat API Fitur 1** | Mengembangkan endpoint untuk fitur utama pertama. |
 
 ---
 
@@ -30,11 +30,11 @@ Dokumen ini berisi detail perencanaan kerja individu dan kelompok untuk pengemba
 
 | Individu | Tugas Kunci | Keterangan / Fokus |
 |---------|-------------|--------------------|
-| A | **Membuat API Fitur 2** | Pengembangan endpoint fitur kedua. |
-| B | **Membuat API Fitur 3** | Pengembangan endpoint fitur ketiga. |
-| C | **Membuat API Fitur 4** | Pengembangan endpoint fitur keempat. |
-| D | **Membuat Halaman Auth (Flutter)** | Implementasi UI & logic login/register. |
-| E | **Membuat Halaman Fitur 1 (Flutter)** | Implementasi UI & logic yang menggunakan API Fitur 1. |
+| Waldan | **Membuat API Fitur 2** | Pengembangan endpoint fitur kedua. |
+| Rusydan | **Membuat API Fitur 3** | Pengembangan endpoint fitur ketiga. |
+| Angga | **Membuat API Fitur 4** | Pengembangan endpoint fitur keempat. |
+| Yafi | **Membuat Halaman Auth (Flutter)** | Implementasi UI & logic login/register. |
+| Derriel | **Membuat Halaman Fitur 1 (Flutter)** | Implementasi UI & logic yang menggunakan API Fitur 1. |
 
 ---
 
