@@ -11,20 +11,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:the_rink_mobile/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('The Rink app loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const TheRinkApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify that The Rink title appears
+    expect(find.text('The Rink'), findsOneWidget);
+    
+    // Verify that the Home tab is visible
+    expect(find.text('Home'), findsOneWidget);
+    
+    // Verify that Featured Events section appears
+    expect(find.text('Featured Events'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('Navigation requires auth for restricted tabs', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const TheRinkApp());
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Tap on Arena tab (should show auth modal)
+    await tester.tap(find.text('Arena'));
+    await tester.pumpAndSettle();
+
+    // Verify auth modal appears
+    expect(find.text('Sign in to join the fun!'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
   });
 }
