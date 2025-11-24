@@ -66,12 +66,19 @@ Modul ini berfungsi sebagai papan pengumuman dan platform pendaftaran untuk berb
 Modul ini bertujuan membangun interaksi sosial antar pengguna melalui sebuah forum diskusi. Pengguna dapat memulai topik baru (post), berpartisipasi dalam diskusi dengan membalas (reply), dan memberikan apresiasi melalui fitur upvote untuk menciptakan komunitas yang aktif. (Angga)
 
 Peran atau Aktor Pengguna Aplikasi:
-1. Guest: Bisa melihat-lihat gear, event, arena. Tetapi, tidk bisa booking dan ikut mengisi forum komunitas
+1. Guest: Bisa melihat-lihat gear, event, arena. Tetapi, tidak bisa booking dan ikut mengisi forum komunitas
 2. Customer: Sama dengan guest ditambah bisa booking arena, membeli gear, dan bisa mengisi forum komunitas, serta memiliki manajemen profil tersendiri
 3. Seller: Sama dengan guest ditambah bisa membuat produk baru yang ingin dijual. Memiliki profil penjual tersendiri yang juga melihat list produk yang ia buat
 4. Admin: Bisa melakukan semua hal yang bisa dilakukan semua pengguna, ditamah dengan dashboard admin tersendiri
 
 Alur Pengintegrasian:
+Aplikasi mobile The Rink terintegrasi dengan backend web Django yang telah dideploy di PWS. Flutter berperan sebagai client yang mengirim request HTTP ke endpoint backend menggunakan base URL dari PWS. Setiap response dari backend dikembalikan dalam format JSON, kemudian Flutter melakukan decoding dan memetakan data tersebut ke model Dart agar aman secara tipe data (null-safety) dan mudah dikelola. Data yang sudah menjadi objek model lalu digunakan sebagai sumber tampilan UI pada setiap halaman fitur.
+
+Proses autentikasi dilakukan melalui endpoint login dan register yang disediakan oleh modul Authentication. Ketika pengguna melakukan login atau registrasi dari Flutter, aplikasi mengirim request ke endpoint backend dan menerima session/cookie sebagai tanda autentikasi berhasil. Session ini disimpan dan dikelola oleh CookieRequest sehingga request berikutnya otomatis membawa kredensial pengguna tanpa perlu login ulang. Dengan cara ini, backend dapat membedakan akses antara guest, customer, seller, dan admin berdasarkan status login serta role pengguna yang tersimpan di server.
+
+Setelah autentikasi, integrasi fitur berjalan sesuai modul masing-masing. Pada modul Gear Rental, Flutter mengambil daftar gear dari endpoint katalog, menampilkannya ke pengguna, lalu mengirim request transaksi (checkout) saat pengguna menyelesaikan penyewaan. Pada modul Arena Booking, Flutter meminta data slot ketersediaan arena dari backend untuk ditampilkan dalam bentuk kalender atau daftar booking, kemudian mengirim request booking ketika pengguna memilih jadwal tertentu dan backend memvalidasi agar tidak terjadi double booking sebelum menyimpan data reservasi. Pada modul Experience Package & Event, Flutter menampilkan daftar event/kelas yang diambil dari endpoint event, lalu mengirim request ketika pengguna mendaftar. Pada modul Community & Forum, Flutter mengambil daftar post dan reply dari endpoint forum, mengirim request membuat post/reply baru, serta memanggil endpoint upvote untuk interaksi komunitas dan seluruh aksi ini hanya dapat dilakukan oleh pengguna yang sudah login saja.
+
+Secara keseluruhan, alur integrasi dilakukan dengan pola -> Flutter memanggil endpoint untuk membaca data (GET), memproses JSON menjadi model, lalu menampilkan ke UI, sedangkan untuk aksi pengguna (POST/PUT/READ/DELETE), Flutter mengirimkan data input ke backend, backend memvalidasi dan menyimpan ke database, kemudian mengembalikan status sukses/gagal yang diterjemahkan Flutter menjadi notifikasi atau pembaruan tampilan. Dengan arsitektur ini, aplikasi mobile dan web berbagi satu sumber data yang sama, sehingga seluruh informasi pengguna, transaksi, booking, event, dan forum tetap sinkron antara Flutter dan PWS.
 
 Link Figma: https://www.figma.com/design/YBczn72Ok2p8p6iRfV51Re/The-RInk?node-id=0-1&t=FCiY8sKuNed8Obd9-1
 
