@@ -667,7 +667,7 @@ class _PackageCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFF6B46C1).withOpacity(0.1),
+                color: const Color(0xFF6B46C1).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
