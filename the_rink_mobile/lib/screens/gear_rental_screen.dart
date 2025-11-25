@@ -21,8 +21,17 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
     'Skates',
     'Protective Gear',
     'Sticks',
-    'Other'
+    'Other',
   ];
+
+  // Mapping dari display name ke API category name
+  final Map<String, String> _categoryMapping = {
+    'All': 'all',
+    'Skates': 'ice_skating',
+    'Protective Gear': 'protective_gear',
+    'Sticks': 'hockey',
+    'Other': 'other',
+  };
 
   @override
   void initState() {
@@ -39,7 +48,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
     try {
       final data = await _service.getAllGears();
       final gears = data.map((json) => Gear.fromJson(json)).toList();
-      
+
       setState(() {
         _gears = gears;
         _filteredGears = gears;
@@ -59,9 +68,12 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
       if (category == 'All') {
         _filteredGears = _gears;
       } else {
+        // Konversi display category ke API category
+        final apiCategory =
+            _categoryMapping[category] ?? category.toLowerCase();
+
         _filteredGears = _gears
-            .where((gear) =>
-                gear.category.toLowerCase() == category.toLowerCase())
+            .where((gear) => gear.category.toLowerCase() == apiCategory)
             .toList();
       }
     });
@@ -112,8 +124,9 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
                     selectedColor: const Color(0xFF6B46C1),
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 );
@@ -122,9 +135,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
           ),
 
           // Content
-          Expanded(
-            child: _buildContent(),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
     );
@@ -133,9 +144,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
   Widget _buildContent() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF6B46C1),
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF6B46C1)),
       );
     }
 
@@ -146,18 +155,11 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 80,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.error_outline, size: 80, color: Colors.grey[400]),
               const SizedBox(height: 16),
               const Text(
                 'Failed to load gears',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
@@ -175,8 +177,10 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6B46C1),
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
@@ -198,10 +202,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
             const SizedBox(height: 16),
             const Text(
               'No gears available',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -229,10 +230,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
         itemCount: _filteredGears.length,
         itemBuilder: (context, index) {
           final gear = _filteredGears[index];
-          return _GearCard(
-            gear: gear,
-            onTap: () => _showGearDetail(gear),
-          );
+          return _GearCard(gear: gear, onTap: () => _showGearDetail(gear));
         },
       ),
     );
@@ -252,146 +250,278 @@ class _GearCard extends StatelessWidget {
   final Gear gear;
   final VoidCallback onTap;
 
-  const _GearCard({
-    required this.gear,
-    required this.onTap,
-  });
+  const _GearCard({required this.gear, required this.onTap});
+
+  String _getCategoryDisplay(String category) {
+    final categoryMap = {
+      'ice_skating': 'Ice Skating',
+      'protective_gear': 'Protective Gear',
+      'hockey': 'Hockey',
+      'apparel': 'Apparel',
+      'accessories': 'Accessories',
+      'curling': 'Curling',
+    };
+    return categoryMap[category.toLowerCase()] ?? category;
+  }
+
+  IconData _getCategoryIcon(String category) {
+    final iconMap = {
+      'ice_skating': Icons.ice_skating,
+      'protective_gear': Icons.shield,
+      'hockey': Icons.sports_hockey,
+      'apparel': Icons.checkroom,
+      'accessories': Icons.shopping_bag,
+      'curling': Icons.sports,
+    };
+    return iconMap[category.toLowerCase()] ?? Icons.sports_hockey_rounded;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      elevation: 3,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
+            // Image Section
             Expanded(
-              flex: 3,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
+              flex: 4,
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Colors.grey[100]!, Colors.grey[200]!],
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
                       child: gear.imageUrl.isNotEmpty
                           ? Image.network(
                               gear.imageUrl,
                               fit: BoxFit.cover,
                               width: double.infinity,
+                              height: double.infinity,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value:
+                                            loadingProgress
+                                                    .expectedTotalBytes !=
+                                                null
+                                            ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                            : null,
+                                        color: const Color(0xFF6B46C1),
+                                        strokeWidth: 2,
+                                      ),
+                                    );
+                                  },
                               errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.sports_hockey_rounded,
-                                  size: 50,
-                                  color: Colors.grey,
+                                return Center(
+                                  child: Icon(
+                                    _getCategoryIcon(gear.category),
+                                    size: 60,
+                                    color: Colors.grey[400],
+                                  ),
                                 );
                               },
                             )
-                          : const Icon(
-                              Icons.sports_hockey_rounded,
-                              size: 50,
-                              color: Colors.grey,
+                          : Center(
+                              child: Icon(
+                                _getCategoryIcon(gear.category),
+                                size: 60,
+                                color: Colors.grey[400],
+                              ),
                             ),
                     ),
-                    if (gear.isFeatured)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                  ),
+                  // Featured Badge
+                  if (gear.isFeatured)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6B46C1), Color(0xFF8B5CF6)],
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF6B46C1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'Featured',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6B46C1).withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.star, color: Colors.white, size: 12),
+                            SizedBox(width: 4),
+                            Text(
+                              'Featured',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    if (gear.stock == 0)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(12),
-                              topRight: Radius.circular(12),
-                            ),
+                    ),
+                  // Out of Stock Overlay
+                  if (gear.stock == 0)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
                           ),
-                          child: const Center(
-                            child: Text(
+                        ),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
                               'OUT OF STOCK',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
                             ),
                           ),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
-            // Details
+            // Details Section
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Category Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6B46C1).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getCategoryIcon(gear.category),
+                            size: 12,
+                            color: const Color(0xFF6B46C1),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getCategoryDisplay(gear.category),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF6B46C1),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Gear Name
                     Text(
                       gear.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 15,
+                        height: 1.2,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      gear.category,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey[600],
-                      ),
-                    ),
                     const Spacer(),
+                    // Stock Indicator
+                    if (gear.stock > 0)
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${gear.stock} in stock',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 6),
+                    // Price
                     Row(
                       children: [
                         Text(
                           '\$${gear.pricePerDay.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 18,
                             color: Color(0xFF6B46C1),
                           ),
                         ),
-                        const Text(
+                        const SizedBox(width: 4),
+                        Text(
                           '/day',
                           style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -443,9 +573,7 @@ class _GearDetailSheet extends StatelessWidget {
             Container(
               height: 200,
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-              ),
+              decoration: BoxDecoration(color: Colors.grey[200]),
               child: gear.imageUrl.isNotEmpty
                   ? Image.network(
                       gear.imageUrl,
@@ -504,8 +632,10 @@ class _GearDetailSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(8),
@@ -533,10 +663,7 @@ class _GearDetailSheet extends StatelessWidget {
                       const SizedBox(width: 8),
                       const Text(
                         'per day',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -545,9 +672,7 @@ class _GearDetailSheet extends StatelessWidget {
                   Row(
                     children: [
                       Icon(
-                        gear.stock > 0
-                            ? Icons.check_circle
-                            : Icons.cancel,
+                        gear.stock > 0 ? Icons.check_circle : Icons.cancel,
                         color: gear.stock > 0 ? Colors.green : Colors.red,
                         size: 20,
                       ),
@@ -580,10 +705,7 @@ class _GearDetailSheet extends StatelessWidget {
                   // Description
                   const Text(
                     'Description',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -607,7 +729,8 @@ class _GearDetailSheet extends StatelessWidget {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                      'Added ${gear.name} to cart (Demo)'),
+                                    'Added ${gear.name} to cart (Demo)',
+                                  ),
                                   backgroundColor: const Color(0xFF6B46C1),
                                   action: SnackBarAction(
                                     label: 'View Cart',
