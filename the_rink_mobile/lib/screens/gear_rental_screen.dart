@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/rental_gear_models.dart';
 import '../services/rental_gear_service.dart';
+import 'cart_screen.dart';
 
 class GearRentalScreen extends StatefulWidget {
   const GearRentalScreen({super.key});
@@ -13,25 +14,13 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
   final RentalGearService _service = RentalGearService();
   List<Gear> _gears = [];
   List<Gear> _filteredGears = [];
+  // Simple local cart state (demo)
+  final List<CartItemPreview> _cartItems = [];
   bool _isLoading = true;
   String? _error;
-  String _selectedCategory = 'All';
-  final List<String> _categories = [
-    'All',
-    'Skates',
-    'Protective Gear',
-    'Sticks',
-    'Other',
-  ];
+  String _searchQuery = '';
 
-  // Mapping dari display name ke API category name
-  final Map<String, String> _categoryMapping = {
-    'All': 'all',
-    'Skates': 'ice_skating',
-    'Protective Gear': 'protective_gear',
-    'Sticks': 'hockey',
-    'Other': 'other',
-  };
+  // Category mapping removed; search-only filtering
 
   @override
   void initState() {
@@ -62,21 +51,26 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
     }
   }
 
-  void _filterByCategory(String category) {
+  void _onSearchChanged(String text) {
     setState(() {
-      _selectedCategory = category;
-      if (category == 'All') {
-        _filteredGears = _gears;
-      } else {
-        // Konversi display category ke API category
-        final apiCategory =
-            _categoryMapping[category] ?? category.toLowerCase();
-
-        _filteredGears = _gears
-            .where((gear) => gear.category.toLowerCase() == apiCategory)
-            .toList();
-      }
+      _searchQuery = text.trim().toLowerCase();
+      _applyFilters();
     });
+  }
+
+  void _applyFilters() {
+    List<Gear> result = _gears;
+
+    // Search filter (name + description + seller)
+    if (_searchQuery.isNotEmpty) {
+      result = result.where((g) {
+        final hay = '${g.name} ${g.description} ${g.sellerUsername}'
+            .toLowerCase();
+        return hay.contains(_searchQuery);
+      }).toList();
+    }
+
+    _filteredGears = result;
   }
 
   @override
@@ -88,11 +82,10 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
             onPressed: () {
-              // Navigate to cart
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Cart feature - coming soon!'),
-                  duration: Duration(seconds: 1),
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      CartScreen(items: List<CartItemPreview>.from(_cartItems)),
                 ),
               );
             },
@@ -101,36 +94,39 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
       ),
       body: Column(
         children: [
-          // Category Filter
-          Container(
-            height: 50,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final category = _categories[index];
-                final isSelected = _selectedCategory == category;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(category),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) _filterByCategory(category);
-                    },
-                    backgroundColor: Colors.grey[200],
-                    selectedColor: const Color(0xFF6B46C1),
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+          // Centered Search Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: TextField(
+                  onChanged: _onSearchChanged,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: 'Search gear…',
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 12,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF6B46C1)),
                     ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
           ),
 
@@ -206,9 +202,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _selectedCategory == 'All'
-                  ? 'Check back later for new equipment'
-                  : 'No gears in this category',
+              'Check back later for new equipment',
               style: TextStyle(color: Colors.grey[600]),
             ),
           ],
@@ -241,7 +235,41 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _GearDetailSheet(gear: gear),
+      builder: (context) => _GearDetailSheet(
+        gear: gear,
+        onAddToCart: (g) {
+          // add or increase quantity if same gear exists
+          final idx = _cartItems.indexWhere((e) => e.gear.id == g.id);
+          if (idx >= 0) {
+            _cartItems[idx] = CartItemPreview(
+              gear: _cartItems[idx].gear,
+              quantity: _cartItems[idx].quantity + 1,
+              days: _cartItems[idx].days,
+            );
+          } else {
+            _cartItems.add(CartItemPreview(gear: g, quantity: 1, days: 1));
+          }
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added ${g.name} to cart'),
+              action: SnackBarAction(
+                label: 'View Cart',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CartScreen(
+                        items: List<CartItemPreview>.from(_cartItems),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+          setState(() {});
+        },
+      ),
     );
   }
 }
@@ -539,8 +567,9 @@ class _GearCard extends StatelessWidget {
 
 class _GearDetailSheet extends StatelessWidget {
   final Gear gear;
+  final void Function(Gear gear) onAddToCart;
 
-  const _GearDetailSheet({required this.gear});
+  const _GearDetailSheet({required this.gear, required this.onAddToCart});
 
   @override
   Widget build(BuildContext context) {
@@ -696,7 +725,7 @@ class _GearDetailSheet extends StatelessWidget {
                       const Icon(Icons.person, size: 20, color: Colors.grey),
                       const SizedBox(width: 8),
                       Text(
-                        'Seller: ${gear.sellerUsername}',
+                        'Seller: ${gear.sellerUsername.isNotEmpty ? gear.sellerUsername : 'The Rink'}',
                         style: const TextStyle(fontSize: 14),
                       ),
                     ],
@@ -724,22 +753,7 @@ class _GearDetailSheet extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: gear.stock > 0
-                          ? () {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Added ${gear.name} to cart (Demo)',
-                                  ),
-                                  backgroundColor: const Color(0xFF6B46C1),
-                                  action: SnackBarAction(
-                                    label: 'View Cart',
-                                    textColor: Colors.white,
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              );
-                            }
+                          ? () => onAddToCart(gear)
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6B46C1),
