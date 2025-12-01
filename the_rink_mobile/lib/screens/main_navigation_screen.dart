@@ -8,6 +8,7 @@ import '../screens/gear_rental_screen.dart';
 import '../screens/community_screen.dart';
 import '../screens/profile_screen.dart';
 import '../widgets/auth_modal_sheet.dart';
+import '../auth/login.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -140,9 +141,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         },
         onUsernamePasswordSignIn: () {
           Navigator.pop(context);
-          setState(() {
-            _isLoggedIn = true;
-          });
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
         },
         onContinueAsGuest: () {
           Navigator.pop(context);

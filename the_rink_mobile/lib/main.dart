@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/main_navigation_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:the_rink_mobile/auth/login.dart';
 
 void main() {
   runApp(const TheRinkApp());
@@ -45,7 +46,7 @@ class TheRinkApp extends StatelessWidget {
             elevation: 8,
           ),
         ),
-        home: const MainNavigationScreen(), // ubah ke login nanti kalo udh jadi
+        home: const LoginPage(), // ubah ke login nanti kalo udh jadi
       ),
     );
   }

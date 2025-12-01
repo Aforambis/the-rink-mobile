@@ -15,6 +15,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  String _selectedRole = 'customer';
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +109,26 @@ class _RegisterPageState extends State<RegisterPage> {
                       return null;
                     },
                   ),
+                  const SizedBox(height: 12.0),
+                  DropdownButtonFormField<String>(
+                    value: _selectedRole,
+                    decoration: const InputDecoration(
+                      labelText: 'Register as',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'customer', child: Text('Customer')),
+                      DropdownMenuItem(value: 'seller', child: Text('Seller')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedRole = value!;
+                      });
+                    },
+                  ),
                   const SizedBox(height: 24.0),
                   ElevatedButton(
                     onPressed: () async {
@@ -125,6 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             "username": username,
                             "password1": password1,
                             "password2": password2,
+                            "role": _selectedRole,
                           }));
                       if (context.mounted) {
                         if (response['status'] == 'success') {
