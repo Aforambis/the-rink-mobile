@@ -1,40 +1,38 @@
 import 'package:flutter/material.dart';
 import '../models/package.dart';
+import '../theme/app_theme.dart';
 
 class PackageCard extends StatelessWidget {
   final Package package;
   final VoidCallback onBook;
 
-  const PackageCard({
-    super.key,
-    required this.package,
-    required this.onBook,
-  });
+  const PackageCard({super.key, required this.package, required this.onBook});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: WinterTheme.frostedCard(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Row(
           children: [
             Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFF6B46C1).withValues(alpha: 0.1),
+                gradient: const LinearGradient(
+                  colors: [AppColors.frostPrimary, AppColors.frostSecondary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: AppColors.softDropShadow,
               ),
               child: const Icon(
                 Icons.card_giftcard_rounded,
-                color: Color(0xFF6B46C1),
-                size: 32,
+                color: Colors.white,
+                size: 30,
               ),
             ),
             const SizedBox(width: 16),
@@ -44,18 +42,14 @@ class PackageCard extends StatelessWidget {
                 children: [
                   Text(
                     package.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     package.description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 13, color: AppColors.mutedText),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -64,10 +58,9 @@ class PackageCard extends StatelessWidget {
                     children: [
                       Text(
                         '\$${package.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: AppColors.frostPrimary,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF6B46C1),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -75,7 +68,7 @@ class PackageCard extends StatelessWidget {
                         package.duration,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[500],
+                          color: AppColors.mutedText,
                         ),
                       ),
                     ],
@@ -83,17 +76,8 @@ class PackageCard extends StatelessWidget {
                 ],
               ),
             ),
-            ElevatedButton(
-              onPressed: onBook,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6B46C1),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Book'),
-            ),
+            const SizedBox(width: 12),
+            ElevatedButton(onPressed: onBook, child: const Text('Book')),
           ],
         ),
       ),

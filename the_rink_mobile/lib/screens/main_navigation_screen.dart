@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
 import '../models/event.dart';
 import '../models/package.dart';
 import '../models/community_post.dart';
@@ -6,9 +8,10 @@ import '../screens/home_events_screen.dart';
 import '../screens/arena_booking_screen.dart';
 import '../screens/gear_rental_screen.dart';
 import '../screens/community_screen.dart';
-import '../screens/profile_screen.dart';
+import '../auth/custprofile.dart';
 import '../widgets/auth_modal_sheet.dart';
 import '../auth/login.dart';
+import '../theme/app_theme.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -19,7 +22,6 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
-  bool _isLoggedIn = false;
 
   // Mock data
   final List<Event> _featuredEvents = [
@@ -77,7 +79,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     CommunityPost(
       id: '1',
       username: 'ice_queen_23',
-      content: 'Just nailed my first axel jump! 🎉 The coaching here is incredible. Thank you Coach Maria!',
+      content:
+          'Just nailed my first axel jump! 🎉 The coaching here is incredible. Thank you Coach Maria!',
       likes: 142,
       timeAgo: '2h ago',
       avatarColor: 'blue',
@@ -85,7 +88,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     CommunityPost(
       id: '2',
       username: 'hockey_dad_mike',
-      content: 'My son\'s team won their first game today at The Rink! Such an amazing facility. Highly recommend for youth hockey.',
+      content:
+          'My son\'s team won their first game today at The Rink! Such an amazing facility. Highly recommend for youth hockey.',
       likes: 89,
       timeAgo: '5h ago',
       avatarColor: 'red',
@@ -93,7 +97,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     CommunityPost(
       id: '3',
       username: 'figure_skater_sara',
-      content: 'The new LED floor lighting during evening sessions is absolutely stunning! Perfect for practice videos 📹',
+      content:
+          'The new LED floor lighting during evening sessions is absolutely stunning! Perfect for practice videos 📹',
       likes: 203,
       timeAgo: '1d ago',
       avatarColor: 'purple',
@@ -101,7 +106,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     CommunityPost(
       id: '4',
       username: 'first_timer_joe',
-      content: 'Took my first skating lesson today. Fell about 20 times but had a blast! Staff was super patient and helpful.',
+      content:
+          'Took my first skating lesson today. Fell about 20 times but had a blast! Staff was super patient and helpful.',
       likes: 67,
       timeAgo: '2d ago',
       avatarColor: 'green',
@@ -110,11 +116,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   void _onNavTap(int index) {
     // Check if user is trying to access restricted tabs
-    if (!_isLoggedIn && (index == 1 || index == 2)) {
+    if (!context.read<CookieRequest>().loggedIn && (index == 1 || index == 2)) {
       _showAuthModal();
       return;
     }
-    
+
     setState(() {
       _selectedIndex = index;
     });
@@ -128,13 +134,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (context) => AuthModalSheet(
         onGoogleSignIn: () {
           Navigator.pop(context);
-          setState(() {
-            _isLoggedIn = true;
-          });
+          // Mock Google sign-in - in real app, handle actual login
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Welcome back! You\'re now signed in.'),
-              backgroundColor: Color(0xFF6B46C1),
+              content: Text('Google sign-in not implemented yet.'),
+              backgroundColor: AppColors.frostPrimary,
               duration: Duration(seconds: 2),
             ),
           );
@@ -154,13 +158,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _handleActionButton({required String action}) {
-    if (!_isLoggedIn) {
+    if (!context.read<CookieRequest>().loggedIn) {
       _showAuthModal();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('$action action confirmed!'),
-          backgroundColor: const Color(0xFF6B46C1),
+          backgroundColor: AppColors.frostPrimary,
         ),
       );
     }
@@ -181,15 +185,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 3:
         return CommunityScreen(
           posts: _communityPosts,
-          isLoggedIn: _isLoggedIn,
+          isLoggedIn: context.read<CookieRequest>().loggedIn,
           onActionRequired: _showAuthModal,
         );
       case 4:
         return ProfileScreen(
-          isLoggedIn: _isLoggedIn,
-          onSignOut: () {
+          isLoggedIn: context.read<CookieRequest>().loggedIn,
+          onSignOut: () async {
+            final request = context.read<CookieRequest>();
+            await request.logout("http://localhost:8000/auth_mob/logout/");
             setState(() {
-              _isLoggedIn = false;
               _selectedIndex = 0;
             });
           },

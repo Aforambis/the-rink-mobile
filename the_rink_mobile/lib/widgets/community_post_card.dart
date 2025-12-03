@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/community_post.dart';
+import '../theme/app_theme.dart';
 
 class CommunityPostCard extends StatefulWidget {
   final CommunityPost post;
@@ -27,7 +28,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
       case 'red':
         return Colors.red;
       case 'purple':
-        return const Color(0xFF6B46C1);
+        return AppColors.frostPrimary;
       case 'green':
         return Colors.green;
       default:
@@ -37,15 +38,11 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: WinterTheme.frostedCard(),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,15 +65,14 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                     children: [
                       Text(
                         widget.post.username,
-                        style: const TextStyle(
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
                         ),
                       ),
                       Text(
                         widget.post.timeAgo,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.mutedText,
                           fontSize: 12,
                         ),
                       ),
@@ -114,7 +110,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                 Text(
                   '${widget.post.likes + (_isLiked ? 1 : 0)}',
                   style: TextStyle(
-                    color: Colors.grey[700],
+                    color: AppColors.mutedText,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -123,10 +119,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                   icon: const Icon(Icons.comment_outlined),
                   onPressed: widget.onLike,
                 ),
-                Text(
-                  'Comment',
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
+                Text('Comment', style: TextStyle(color: AppColors.mutedText)),
               ],
             ),
           ],

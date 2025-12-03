@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/community_post.dart';
 import '../widgets/community_post_card.dart';
+import '../theme/app_theme.dart';
 
 class CommunityScreen extends StatelessWidget {
   final List<CommunityPost> posts;
@@ -17,36 +18,44 @@ class CommunityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Community'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
-        ],
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: AppColors.auroraGradient),
+        ),
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
       ),
-      body: ListView.builder(
-        itemCount: posts.length,
-        itemBuilder: (context, index) {
-          final post = posts[index];
-          return CommunityPostCard(
-            post: post,
-            isLoggedIn: isLoggedIn,
-            onLike: () {
-              if (!isLoggedIn) {
-                onActionRequired();
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Post liked!'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              }
-            },
-          );
-        },
+      body: Container(
+        decoration: WinterTheme.pageBackground(),
+        child: ListView.builder(
+          padding: const EdgeInsets.only(top: 16, bottom: 100),
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final post = posts[index];
+            return CommunityPostCard(
+              post: post,
+              isLoggedIn: isLoggedIn,
+              onLike: () {
+                if (!isLoggedIn) {
+                  onActionRequired();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Post liked!'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                }
+              },
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -58,7 +67,7 @@ class CommunityScreen extends StatelessWidget {
             );
           }
         },
-        backgroundColor: const Color(0xFF6B46C1),
+        backgroundColor: AppColors.frostPrimary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
