@@ -46,7 +46,7 @@ class TheRinkApp extends StatelessWidget {
             elevation: 8,
           ),
         ),
-        home: const LoginPage(), // ubah ke login nanti kalo udh jadi
+        home: const MainNavigationScreen(), // ubah ke login nanti kalo udh jadi
       ),
     );
   }
