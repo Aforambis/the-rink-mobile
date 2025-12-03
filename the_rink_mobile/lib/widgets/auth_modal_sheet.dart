@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class AuthModalSheet extends StatelessWidget {
   final VoidCallback onGoogleSignIn;
@@ -15,11 +16,11 @@ class AuthModalSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+      decoration: BoxDecoration(
+        gradient: AppColors.iceSheetGradient,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
         ),
       ),
       padding: const EdgeInsets.all(24),
@@ -35,27 +36,33 @@ class AuthModalSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Icon(
-            Icons.ice_skating_rounded,
-            size: 64,
-            color: Color(0xFF6B46C1),
+          Container(
+            width: 78,
+            height: 78,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppColors.auroraGradient,
+              boxShadow: AppColors.softDropShadow,
+            ),
+            child: const Icon(
+              Icons.ice_skating_rounded,
+              size: 42,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Sign in to join the fun!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.glacialBlue,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Access exclusive features, book ice time, and connect with the community',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.mutedText),
           ),
           const SizedBox(height: 32),
           SizedBox(
@@ -65,12 +72,7 @@ class AuthModalSheet extends StatelessWidget {
               icon: const Icon(Icons.g_mobiledata, size: 28),
               label: const Text('Continue with Google'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6B46C1),
-                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
               ),
             ),
           ),
@@ -82,9 +84,9 @@ class AuthModalSheet extends StatelessWidget {
               icon: const Icon(Icons.email_rounded),
               label: const Text('Username / Password'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF6B46C1),
+                foregroundColor: AppColors.frostPrimaryDark,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                side: const BorderSide(color: Color(0xFF6B46C1)),
+                side: const BorderSide(color: AppColors.frostPrimaryDark),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -94,9 +96,9 @@ class AuthModalSheet extends StatelessWidget {
           const SizedBox(height: 12),
           TextButton(
             onPressed: onContinueAsGuest,
-            child: const Text(
+            child: Text(
               'Continue as Guest',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: AppColors.mutedText),
             ),
           ),
           SizedBox(height: MediaQuery.of(context).viewInsets.bottom),

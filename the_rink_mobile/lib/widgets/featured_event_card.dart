@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/event.dart';
+import '../theme/app_theme.dart';
 
 class FeaturedEventCard extends StatelessWidget {
   final Event event;
@@ -16,12 +17,8 @@ class FeaturedEventCard extends StatelessWidget {
     return Container(
       width: 280,
       margin: const EdgeInsets.only(right: 16),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.grey[200]!),
-        ),
+      child: Container(
+        decoration: WinterTheme.frostedCard(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
@@ -31,7 +28,7 @@ class FeaturedEventCard extends StatelessWidget {
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF6B46C1), Color(0xFF9F7AEA)],
+                    colors: [AppColors.frostPrimary, AppColors.auroraViolet],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -72,9 +69,9 @@ class FeaturedEventCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           event.date,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: AppColors.mutedText,
                           ),
                         ),
                       ],
@@ -84,14 +81,6 @@ class FeaturedEventCard extends StatelessWidget {
                       height: 32,
                       child: ElevatedButton(
                         onPressed: onRSVP,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6B46C1),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                        ),
                         child: const Text(
                           'RSVP',
                           style: TextStyle(fontSize: 14),

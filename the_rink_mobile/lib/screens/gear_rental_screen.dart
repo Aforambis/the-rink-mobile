@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/rental_gear_models.dart';
 import '../services/rental_gear_service.dart';
 import 'cart_screen.dart';
+import '../theme/app_theme.dart';
 
 class GearRentalScreen extends StatefulWidget {
   const GearRentalScreen({super.key});
@@ -14,6 +15,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
   final RentalGearService _service = RentalGearService();
   List<Gear> _gears = [];
   List<Gear> _filteredGears = [];
+  final TextEditingController _searchController = TextEditingController();
   // Simple local cart state (demo)
   final List<CartItemPreview> _cartItems = [];
   bool _isLoading = true;
@@ -51,6 +53,18 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
   void initState() {
     super.initState();
     _loadGears();
+    _searchController.addListener(() {
+      final text = _searchController.text;
+      if (text != _searchQuery) {
+        _onSearchChanged(text);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadGears() async {
@@ -108,16 +122,11 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         elevation: 0,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF6B46C1), Color(0xFF8B5CF6)],
-            ),
-          ),
+          decoration: const BoxDecoration(gradient: AppColors.auroraGradient),
         ),
         title: const Text('Gear Rental'),
         actions: [
@@ -134,57 +143,142 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Header + Search
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: TextField(
-                  onChanged: _onSearchChanged,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search),
-                    hintText: 'Search gear…',
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 0,
-                      horizontal: 12,
+      body: Container(
+        decoration: WinterTheme.pageBackground(),
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          child: Column(
+            children: [
+              // Search + filter row (search field with a filter button on the right)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 720),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          textInputAction: TextInputAction.search,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.search),
+                            hintText: 'Search gear…',
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 0,
+                              horizontal: 12,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.snowSurface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.5),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.frostPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    const SizedBox(width: 12),
+                    Material(
+                      color: AppColors.frostedGlass,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        tooltip: 'Filters',
+                        icon: const Icon(Icons.tune),
+                        color: AppColors.frostPrimary,
+                        onPressed: () {
+                          // placeholder: we keep chips visible below; this button can open advanced filters later
+                          FocusScope.of(context).unfocus();
+                        },
+                      ),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF6B46C1)),
-                    ),
-                  ),
+                  ],
                 ),
               ),
-            ),
-          ),
 
-          // Category chips (derived from data)
-          SizedBox(
-            height: 44,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _buildCategoryChips(),
-            ),
-          ),
+              // Single horizontal row: search bar followed by filter chips
+              SizedBox(
+                height: 52,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  children: [
+                    // Inline search field styled like a wide chip
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      child: SizedBox(
+                        width: 320,
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _onSearchChanged,
+                          textInputAction: TextInputAction.search,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.search),
+                            hintText: 'Search gear…',
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 0,
+                              horizontal: 12,
+                            ),
+                            filled: true,
+                            fillColor: AppColors.snowSurface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide(
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(24),
+                              ),
+                              borderSide: BorderSide(
+                                color: AppColors.frostPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ..._buildCategoryChips(),
+                  ],
+                ),
+              ),
 
-          // Content
-          Expanded(child: _buildContent()),
-        ],
+              // Content
+              Expanded(child: _buildContent()),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -229,46 +323,71 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
   Widget _buildContent() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF6B46C1)),
+        child: CircularProgressIndicator(color: AppColors.frostPrimary),
       );
     }
 
     if (_error != null) {
+      final isNetworkIssue = _error!.toLowerCase().contains(
+        'failed host lookup',
+      );
+      final friendlyMessage = isNetworkIssue
+          ? 'Cannot reach the server. Make sure the backend is running or your device is online.'
+          : _error!;
+
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.error_outline, size: 80, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              const Text(
-                'Failed to load gears',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _error!.contains('Failed host lookup')
-                    ? 'Cannot connect to server.\nMake sure your Django backend is running.'
-                    : _error!,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _loadGears,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6B46C1),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.frostedGlass,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: AppColors.softDropShadow,
+              border: Border.all(color: Colors.white.withOpacity(0.4)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    gradient: AppColors.auroraGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.error_outline,
+                    color: Colors.white,
+                    size: 36,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                const Text(
+                  'Failed to load gear',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.glacialBlue,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  friendlyMessage,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.mutedText,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: _loadGears,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Try again'),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -301,7 +420,7 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadGears,
-      color: const Color(0xFF6B46C1),
+      color: AppColors.frostPrimary,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
@@ -367,6 +486,16 @@ class _GearRentalScreenState extends State<GearRentalScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _openSearch() async {
+    final selected = await showSearch<Gear?>(
+      context: context,
+      delegate: _GearSearchDelegate(gears: _gears),
+    );
+
+    if (!mounted || selected == null) return;
+    _showGearDetail(selected);
   }
 }
 
@@ -451,7 +580,7 @@ class _GearCard extends StatelessWidget {
                                                   loadingProgress
                                                       .expectedTotalBytes!
                                             : null,
-                                        color: const Color(0xFF6B46C1),
+                                        color: AppColors.frostPrimary,
                                         strokeWidth: 2,
                                       ),
                                     );
@@ -487,12 +616,15 @@ class _GearCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF6B46C1), Color(0xFF8B5CF6)],
+                            colors: [
+                              AppColors.frostPrimary,
+                              AppColors.frostSecondary,
+                            ],
                           ),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF6B46C1).withOpacity(0.3),
+                              color: AppColors.frostPrimary.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -551,47 +683,14 @@ class _GearCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Details Section
+            // Info Section
             Expanded(
               flex: 3,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    // Category Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6B46C1).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _getCategoryIcon(gear.category),
-                            size: 12,
-                            color: const Color(0xFF6B46C1),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _getCategoryDisplay(gear.category),
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: Color(0xFF6B46C1),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Gear Name
                     Text(
                       gear.name,
                       style: const TextStyle(
@@ -602,7 +701,6 @@ class _GearCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    // Stock Indicator
                     if (gear.stock > 0)
                       Row(
                         children: [
@@ -625,7 +723,6 @@ class _GearCard extends StatelessWidget {
                         ],
                       ),
                     const SizedBox(height: 4),
-                    // Price
                     Row(
                       children: [
                         Text(
@@ -633,7 +730,7 @@ class _GearCard extends StatelessWidget {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
-                            color: Color(0xFF6B46C1),
+                            color: AppColors.frostPrimary,
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -651,6 +748,140 @@ class _GearCard extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GearSearchDelegate extends SearchDelegate<Gear?> {
+  _GearSearchDelegate({required this.gears});
+
+  final List<Gear> gears;
+
+  @override
+  String? get searchFieldLabel => 'Search gear, seller, or category';
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final base = Theme.of(context);
+    return base.copyWith(
+      appBarTheme: base.appBarTheme.copyWith(
+        backgroundColor: AppColors.frostPrimary,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        hintStyle: const TextStyle(color: Colors.white70),
+        border: InputBorder.none,
+      ),
+      textTheme: base.textTheme.apply(bodyColor: Colors.white),
+    );
+  }
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
+    ];
+  }
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestions = query.isEmpty ? gears.take(6).toList() : _filter(query);
+    if (suggestions.isEmpty) {
+      return _EmptySuggestion(message: 'No matching gear found.');
+    }
+    return _ResultList(
+      gears: suggestions,
+      onSelected: (gear) => close(context, gear),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final results = _filter(query);
+    if (results.isEmpty) {
+      return _EmptySuggestion(message: 'No results for "$query"');
+    }
+    return _ResultList(
+      gears: results,
+      onSelected: (gear) => close(context, gear),
+    );
+  }
+
+  List<Gear> _filter(String term) {
+    final q = term.trim().toLowerCase();
+    if (q.isEmpty) return gears;
+    return gears.where((gear) {
+      final haystack =
+          '${gear.name} ${gear.description} ${gear.category} ${gear.sellerUsername}'
+              .toLowerCase();
+      return haystack.contains(q);
+    }).toList();
+  }
+}
+
+class _ResultList extends StatelessWidget {
+  const _ResultList({required this.gears, required this.onSelected});
+
+  final List<Gear> gears;
+  final ValueChanged<Gear> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      itemBuilder: (context, index) {
+        final gear = gears[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: AppColors.frostPrimary.withOpacity(0.15),
+            child: Icon(Icons.ice_skating, color: AppColors.frostPrimary),
+          ),
+          title: Text(gear.name),
+          subtitle: Text(
+            '${gear.category} • ${gear.sellerUsername.isEmpty ? 'The Rink' : gear.sellerUsername}',
+          ),
+          trailing: Text(
+            '\$${gear.pricePerDay.toStringAsFixed(0)}/day',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          onTap: () => onSelected(gear),
+        );
+      },
+      separatorBuilder: (_, __) => const Divider(height: 0),
+      itemCount: gears.length,
+    );
+  }
+}
+
+class _EmptySuggestion extends StatelessWidget {
+  const _EmptySuggestion({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.search_off, size: 48, color: AppColors.mutedText),
+            const SizedBox(height: 12),
+            Text(message, style: const TextStyle(color: AppColors.mutedText)),
           ],
         ),
       ),
@@ -680,18 +911,20 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF6B46C1).withOpacity(0.12)
-              : Colors.grey[100],
+              ? AppColors.frostPrimary.withOpacity(0.15)
+              : AppColors.snowSurface,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: selected ? const Color(0xFF6B46C1) : Colors.grey[300]!,
+            color: selected
+                ? AppColors.frostPrimary
+                : Colors.white.withOpacity(0.6),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 16, color: const Color(0xFF6B46C1)),
+              Icon(icon, size: 16, color: AppColors.frostPrimary),
               const SizedBox(width: 6),
             ],
             Text(
@@ -699,7 +932,7 @@ class _FilterChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selected ? const Color(0xFF4C1D95) : Colors.grey[800],
+                color: selected ? AppColors.glacialBlue : AppColors.mutedText,
               ),
             ),
           ],
@@ -746,7 +979,9 @@ class _GearDetailSheet extends StatelessWidget {
             Container(
               height: 200,
               width: double.infinity,
-              decoration: BoxDecoration(color: Colors.grey[200]),
+              decoration: const BoxDecoration(
+                gradient: AppColors.iceSheetGradient,
+              ),
               child: gear.imageUrl.isNotEmpty
                   ? Image.network(
                       gear.imageUrl,
@@ -789,7 +1024,12 @@ class _GearDetailSheet extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6B46C1),
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.frostPrimary,
+                                AppColors.frostSecondary,
+                              ],
+                            ),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Text(
@@ -810,14 +1050,15 @@ class _GearDetailSheet extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: AppColors.snowSurface,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      gear.category,
+                      _getCategoryDisplay(gear.category),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.glacialBlue,
                       ),
                     ),
                   ),
@@ -830,13 +1071,16 @@ class _GearDetailSheet extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF6B46C1),
+                          color: AppColors.frostPrimary,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'per day',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.mutedText,
+                        ),
                       ),
                     ],
                   ),
@@ -866,7 +1110,11 @@ class _GearDetailSheet extends StatelessWidget {
                   // Seller
                   Row(
                     children: [
-                      const Icon(Icons.person, size: 20, color: Colors.grey),
+                      const Icon(
+                        Icons.person,
+                        size: 20,
+                        color: AppColors.mutedText,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Seller: ${gear.sellerUsername.isNotEmpty ? gear.sellerUsername : 'The Rink'}',
@@ -885,9 +1133,9 @@ class _GearDetailSheet extends StatelessWidget {
                     gear.description.isNotEmpty
                         ? gear.description
                         : 'No description available.',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[700],
+                      color: AppColors.mutedText,
                       height: 1.5,
                     ),
                   ),
@@ -900,12 +1148,7 @@ class _GearDetailSheet extends StatelessWidget {
                           ? () => onAddToCart(gear)
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6B46C1),
-                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                         disabledBackgroundColor: Colors.grey[300],
                       ),
                       child: Text(
@@ -925,5 +1168,17 @@ class _GearDetailSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getCategoryDisplay(String category) {
+    const categoryMap = {
+      'ice_skating': 'Ice Skating',
+      'protective_gear': 'Protective Gear',
+      'hockey': 'Hockey',
+      'apparel': 'Apparel',
+      'accessories': 'Accessories',
+      'curling': 'Curling',
+    };
+    return categoryMap[category.toLowerCase()] ?? category;
   }
 }

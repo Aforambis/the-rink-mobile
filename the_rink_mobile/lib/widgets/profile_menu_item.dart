@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class ProfileMenuItem extends StatelessWidget {
   final IconData icon;
@@ -15,9 +16,21 @@ class ProfileMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF6B46C1)),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [AppColors.frostPrimary, AppColors.frostSecondary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Icon(icon, color: Colors.white, size: 20),
+      ),
+      title: Text(title, style: Theme.of(context).textTheme.bodyLarge),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.mutedText),
       onTap: onTap,
     );
   }

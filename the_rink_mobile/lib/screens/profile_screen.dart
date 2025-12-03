@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/profile_menu_item.dart';
+import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool isLoggedIn;
@@ -16,10 +17,24 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Profile'),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: AppColors.auroraGradient),
+        ),
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: isLoggedIn ? _buildLoggedInView(context) : _buildGuestView(context),
+      body: Container(
+        decoration: WinterTheme.pageBackground(),
+        child: isLoggedIn
+            ? _buildLoggedInView(context)
+            : _buildGuestView(context),
+      ),
     );
   }
 
@@ -28,26 +43,29 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 24),
-          const CircleAvatar(
-            radius: 50,
-            backgroundColor: Color(0xFF6B46C1),
-            child: Icon(Icons.person, size: 50, color: Colors.white),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppColors.frostPrimary, AppColors.frostSecondary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: AppColors.softDropShadow,
+            ),
+            child: const Icon(Icons.person, size: 50, color: Colors.white),
           ),
           const SizedBox(height: 16),
           const Text(
             'John Skater',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'john.skater@email.com',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.mutedText),
           ),
           const SizedBox(height: 24),
           ProfileMenuItem(
@@ -107,41 +125,38 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.person_outline,
-              size: 100,
-              color: Colors.grey[300],
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.frostedGlass,
+                boxShadow: AppColors.softDropShadow,
+              ),
+              child: Icon(
+                Icons.person_outline,
+                size: 60,
+                color: AppColors.mutedText,
+              ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Welcome to The Rink',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               'Sign in to access your profile, bookings, and more',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: AppColors.mutedText),
             ),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onSignIn,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6B46C1),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
                 child: const Text('Sign In'),
               ),
             ),
