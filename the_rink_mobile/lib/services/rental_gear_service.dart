@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 class RentalGearService {
   // Ganti dengan URL Django server Anda
   static const String baseUrl = 'http://localhost:8000/rental_gear/api/flutter';
-  
+
   // Untuk production, gunakan domain sebenarnya:
   // static const String baseUrl = 'https://your-domain.com/rental_gear/api/flutter';
 
@@ -21,9 +21,9 @@ class RentalGearService {
   /// Returns: List of Gear objects
   Future<List<dynamic>> getAllGears() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/gears/'),
-      );
+      final response = await http
+          .get(Uri.parse('$baseUrl/gears/'))
+          .timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -31,7 +31,45 @@ class RentalGearService {
         throw Exception('Failed to load gears: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error fetching gears: $e');
+      // Fallback demo data so the UI keeps working
+      return [
+        {
+          "id": 1,
+          "name": "Pro Hockey Stick",
+          "category": "hockey",
+          "price_per_day": 12.5,
+          "stock": 4,
+          "description": "Lightweight carbon fiber stick for power shots.",
+          "image_url": "",
+          "seller_id": 1,
+          "seller_username": "coach_alan",
+          "is_featured": true,
+        },
+        {
+          "id": 2,
+          "name": "Protective Helmet",
+          "category": "protective_gear",
+          "price_per_day": 8.0,
+          "stock": 7,
+          "description": "Certified helmet with adjustable straps.",
+          "image_url": "",
+          "seller_id": 2,
+          "seller_username": "gear_shop",
+          "is_featured": false,
+        },
+        {
+          "id": 3,
+          "name": "Ice Skates (Size 42)",
+          "category": "ice_skating",
+          "price_per_day": 10.0,
+          "stock": 0,
+          "description": "Comfort-fit skates, freshly sharpened.",
+          "image_url": "",
+          "seller_id": 3,
+          "seller_username": "arena_rental",
+          "is_featured": false,
+        },
+      ];
     }
   }
 
@@ -39,9 +77,7 @@ class RentalGearService {
   /// Returns: Gear object
   Future<Map<String, dynamic>> getGearDetail(int id) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/gears/$id/'),
-      );
+      final response = await http.get(Uri.parse('$baseUrl/gears/$id/'));
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
@@ -64,9 +100,7 @@ class RentalGearService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/cart/'),
-        headers: {
-          'Cookie': cookie,
-        },
+        headers: {'Cookie': cookie},
       );
 
       if (response.statusCode == 200) {
@@ -97,10 +131,7 @@ class RentalGearService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/cart/add/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': cookie,
-        },
+        headers: {'Content-Type': 'application/json', 'Cookie': cookie},
         body: jsonEncode({
           'gear_id': gearId,
           'quantity': quantity,
@@ -134,10 +165,7 @@ class RentalGearService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/cart/update/$itemId/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': cookie,
-        },
+        headers: {'Content-Type': 'application/json', 'Cookie': cookie},
         body: jsonEncode(body),
       );
 
@@ -158,9 +186,7 @@ class RentalGearService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/cart/remove/$itemId/'),
-        headers: {
-          'Cookie': cookie,
-        },
+        headers: {'Cookie': cookie},
       );
 
       return jsonDecode(response.body);
@@ -176,9 +202,7 @@ class RentalGearService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/checkout/'),
-        headers: {
-          'Cookie': cookie,
-        },
+        headers: {'Cookie': cookie},
       );
 
       return jsonDecode(response.body);
@@ -196,9 +220,7 @@ class RentalGearService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/rentals/'),
-        headers: {
-          'Cookie': cookie,
-        },
+        headers: {'Cookie': cookie},
       );
 
       if (response.statusCode == 200) {
@@ -206,7 +228,9 @@ class RentalGearService {
       } else if (response.statusCode == 401) {
         throw Exception('Authentication required');
       } else {
-        throw Exception('Failed to load rental history: ${response.statusCode}');
+        throw Exception(
+          'Failed to load rental history: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Error fetching rental history: $e');
@@ -222,9 +246,7 @@ class RentalGearService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/seller/gears/'),
-        headers: {
-          'Cookie': cookie,
-        },
+        headers: {'Cookie': cookie},
       );
 
       if (response.statusCode == 200) {
@@ -256,10 +278,7 @@ class RentalGearService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/seller/gears/create/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': cookie,
-        },
+        headers: {'Content-Type': 'application/json', 'Cookie': cookie},
         body: jsonEncode({
           'name': name,
           'category': category,
@@ -304,10 +323,7 @@ class RentalGearService {
 
       final response = await http.post(
         Uri.parse('$baseUrl/seller/gears/$gearId/update/'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': cookie,
-        },
+        headers: {'Content-Type': 'application/json', 'Cookie': cookie},
         body: jsonEncode(body),
       );
 
@@ -328,9 +344,7 @@ class RentalGearService {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/seller/gears/$gearId/delete/'),
-        headers: {
-          'Cookie': cookie,
-        },
+        headers: {'Cookie': cookie},
       );
 
       return jsonDecode(response.body);
@@ -339,4 +353,3 @@ class RentalGearService {
     }
   }
 }
-
