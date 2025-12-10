@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'screens/main_navigation_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:the_rink_mobile/auth/login.dart';
 import 'theme/app_theme.dart';
 
 import 'package:flutter/material.dart';
@@ -18,19 +21,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Provider(
-      // This is the "Power Station" for your app
       create: (_) {
         CookieRequest request = CookieRequest();
         return request;
       },
       child: MaterialApp(
         title: 'The Rink',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.glacialBlue),
-        ),
-        // Now MainNavigationScreen can find the CookieRequest provider!
-        home: const MainNavigationScreen(),
+        debugShowCheckedModeBanner: false,
+        theme: WinterTheme.build(),
+        home: const MainNavigationScreen(), // ubah ke login nanti kalo udh jadi
       ),
     );
   }

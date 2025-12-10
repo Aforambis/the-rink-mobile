@@ -5,7 +5,7 @@ import 'package:the_rink_mobile/main.dart';
 void main() {
   testWidgets('The Rink app loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const TheRinkApp());
+    await tester.pumpWidget(const MyApp());
 
     // Verify that The Rink title appears
     expect(find.text('The Rink'), findsOneWidget);
@@ -19,7 +19,7 @@ void main() {
 
   testWidgets('Navigation requires auth for restricted tabs', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const TheRinkApp());
+    await tester.pumpWidget(const MyApp());
 
     // Tap on Arena tab (should show auth modal)
     await tester.tap(find.text('Arena'));

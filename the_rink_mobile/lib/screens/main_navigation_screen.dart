@@ -8,10 +8,10 @@ import '../screens/home_events_screen.dart';
 import '../screens/arena_booking_screen.dart';
 import '../screens/gear_rental_screen.dart';
 import '../screens/community_screen.dart';
-import '../screens/profile_screen.dart';
+import '../auth/custprofile.dart';
 import '../widgets/auth_modal_sheet.dart';
+import '../auth/login.dart';
 import '../theme/app_theme.dart';
-import '../screens/login_screen.dart'; // Ensure this file exists
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -129,9 +129,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ),
   ];
 
-  void _onNavTap(int index, CookieRequest request) {
-    // Check real login status from CookieRequest for protected tabs
-    if (!request.loggedIn && (index == 1 || index == 2)) {
+  void _onNavTap(int index) {
+    // Check if user is trying to access restricted tabs
+    if (!context.read<CookieRequest>().loggedIn && (index == 1 || index == 2)) {
       _showAuthModal();
       return;
     }
@@ -149,18 +149,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (context) => AuthModalSheet(
         onGoogleSignIn: () {
           Navigator.pop(context);
+          // Mock Google sign-in - in real app, handle actual login
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Google Sign-In is not yet implemented.'),
+              content: Text('Google sign-in not implemented yet.'),
+              backgroundColor: AppColors.frostPrimary,
+              duration: Duration(seconds: 2),
             ),
           );
         },
         onUsernamePasswordSignIn: () {
           Navigator.pop(context);
-          // Navigate to the real Login Screen
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            MaterialPageRoute(builder: (context) => const LoginPage()),
           );
         },
         onContinueAsGuest: () {
@@ -171,12 +173,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _handleActionButton({required String action}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$action action confirmed!'),
-        backgroundColor: AppColors.frostPrimary,
-      ),
-    );
+    if (!context.read<CookieRequest>().loggedIn) {
+      _showAuthModal();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$action action confirmed!'),
+          backgroundColor: AppColors.frostPrimary,
+        ),
+      );
+    }
   }
 
   Widget _getSelectedScreen(CookieRequest request) {
@@ -195,32 +201,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 3:
         return CommunityScreen(
           posts: _communityPosts,
-          isLoggedIn: request.loggedIn,
+          isLoggedIn: context.read<CookieRequest>().loggedIn,
           onActionRequired: _showAuthModal,
         );
       case 4:
         return ProfileScreen(
-          isLoggedIn: request.loggedIn,
+          isLoggedIn: context.read<CookieRequest>().loggedIn,
           onSignOut: () async {
-            // Replace with your actual PWS URL
-            final response = await request.logout(
-                "https://angga-tri41-therink.pbp.cs.ui.ac.id/auth/logout/");
-            if (context.mounted) {
-              String message = response["message"];
-              if (response['status']) {
-                String uname = response["username"];
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text("$message Sampai jumpa, $uname."),
-                ));
-                setState(() {
-                  _selectedIndex = 0;
-                });
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(message),
-                ));
-              }
-            }
+            final request = context.read<CookieRequest>();
+            await request.logout("http://localhost:8000/auth_mob/logout/");
+            setState(() {
+              _selectedIndex = 0;
+            });
           },
           onSignIn: _showAuthModal,
         );
@@ -242,7 +234,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: _getSelectedScreen(request),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (index) => _onNavTap(index, request),
+        onTap: (index) => _onNavTap(index),
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
