@@ -1,10 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 import '../models/forum.dart';
+
 import '../widgets/forum/forum_post_card.dart';
 import '../widgets/forum/forum_post_search_bar.dart';
+import '../widgets/auth_modal_sheet.dart'; 
+
 import '../services/forum/forum_create_post.dart'; 
 import '../services/forum/forum_edit_post.dart';
 import '../services/forum/forum_delete_post.dart';
@@ -12,12 +17,10 @@ import '../services/forum/forum_filter_post.dart';
 import '../services/forum/forum_leaderboard_post.dart';
 
 class ForumScreen extends StatefulWidget {
-  final bool isLoggedIn;
   final VoidCallback onActionRequired;
 
   const ForumScreen({
     super.key,
-    required this.isLoggedIn,
     required this.onActionRequired,
   });
 
@@ -63,11 +66,20 @@ class _ForumScreenState extends State<ForumScreen> {
     });
   }
 
+  bool get _isLoggedInNow {
+    final request = context.read<CookieRequest>();
+    return request.jsonData['status'] == true;
+  }
+
   void openCreatePostSnackbar() {
+      if (!_isLoggedInNow) {
+      _showAuthModal();
+      return;
+    }
     showGeneralDialog(
         context: context,
         barrierDismissible: true,
-        barrierLabel: 'Create Post',
+        barrierLabel: 'Create a New Post',
         barrierColor: Colors.black54, 
         transitionDuration: const Duration(milliseconds: 200),
         pageBuilder: (context, anim1, anim2) {
@@ -82,7 +94,7 @@ class _ForumScreenState extends State<ForumScreen> {
               child: Material(
                 color: Colors.transparent,
                 child: ForumCreatePostCard(
-                  isLoggedIn: widget.isLoggedIn,
+                  isLoggedIn: _isLoggedInNow,
                   onPostCreated: () {
                     Navigator.of(context).pop();
                     reloadPost();
@@ -107,42 +119,98 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  Future<void> _handleVote(Post post, bool isUpvote) async {
-  if (!widget.isLoggedIn) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please Login First')),
-    );
-    return;
-  }
-
-  try {
-    final request = context.read<CookieRequest>();
-
-    // SESUAIKAN endpoint & payload dengan Django-mu
-    await request.postJson(
-      'http://localhost:8000/forum/vote-flutter/',
-      {
-        'post_id': post.id,
-        'direction': isUpvote ? 'up' : 'down',
+  void _showAuthModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return AuthModalSheet(
+          onGoogleSignIn: () {     // Google
+            Navigator.of(sheetContext).pop();
+            widget.onActionRequired(); 
+          },
+          onUsernamePasswordSignIn: () {    // Login/Register Biasa
+            Navigator.of(sheetContext).pop();
+            widget.onActionRequired(); 
+          },
+          onContinueAsGuest: () {    // Guest Access
+            Navigator.of(sheetContext).pop();
+          },
+        );
       },
     );
-
-    // supaya leaderboard + list ke-refresh
-    reloadPost();
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to vote: $e')),
-    );
   }
-}
 
+  Future<void> _handleVote(Post post, bool isUpvote) async {
+    if (!_isLoggedInNow) {
+      _showAuthModal();
+      return;
+    }
 
+    try {
+      final request = context.read<CookieRequest>();
+
+      // response sudah berupa Map<String, dynamic>
+      final response = await request.postJson(
+        'http://localhost:8000/forum/toggle-vote-flutter/',
+        jsonEncode({
+          'type': 'post',
+          'id': post.id,
+          'is_upvote': isUpvote,
+        }),
+      ) as Map<String, dynamic>;
+
+      setState(() {
+        // update hanya object post ini
+        post.upvotesCount  = (response['upvotes']  ?? post.upvotesCount)  as int;
+        post.downvotesCount = (response['downvotes'] ?? post.downvotesCount) as int;
+      });
+    } 
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to vote: $e')),
+      );
+    }
+  }
+
+  Future<void> _handleReplyVote(Reply reply, bool isUpvote) async {
+    if (!_isLoggedInNow) {
+      _showAuthModal();
+      return;
+    }
+
+    try {
+      final request = context.read<CookieRequest>();
+      final response = await request.postJson(
+        'http://localhost:8000/forum/toggle-vote-flutter/',
+        jsonEncode({
+          'type': 'reply',
+          'id': reply.id,
+          'is_upvote': isUpvote,
+        }),
+      ) as Map<String, dynamic>;
+
+      setState(() {
+        reply.upvotesCount  = (response['upvotes']  ?? reply.upvotesCount)  as int;
+        reply.downvotesCount = (response['downvotes'] ?? reply.downvotesCount) as int;
+      });
+    } 
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to vote: $e')),
+      );
+    }
+  }
+
+  // Forum Screen
   @override
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
-    final int? currentUserId = request.jsonData['user_id'] is int
-    ? request.jsonData['user_id'] as int
-    : int.tryParse(request.jsonData['user_id']?.toString() ?? '');
+    final rawId = request.jsonData['user_id'] ?? request.jsonData['id'];
+
+    final int? currentUserId = rawId is int ? 
+    rawId : int.tryParse(rawId?.toString() ?? '');
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -192,219 +260,220 @@ class _ForumScreenState extends State<ForumScreen> {
           ? <Post>[]
           : filteredPost.sublist(startIndex, endIndex);
 
-          return Column(
+          return 
+          Column(
             children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
+            Expanded(
+              child: 
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: 
+                Column(
+                  children: [
 
-                      // Header
-                      _ForumHeader(
-                        onRefresh: reloadPost,
-                        onSearchChanged: (value) {
-                          setState(() {
-                            searchTitle = value;
-                            currentPage = 0;
-                          });
-                        },
-                        onCreatePressed: openCreatePostSnackbar,
-                      ),
+                  // Header (Title + Tombol Create Post)
+                  _ForumHeader(
+                    onRefresh: reloadPost,
+                    onSearchChanged: (value) {
+                    setState(() {
+                      searchTitle = value;
+                      currentPage = 0;
+                    });
+                    },
+                    onCreatePressed: openCreatePostSnackbar,
+                  ),
 
-                LayoutBuilder(
-                  builder: (context, constraints) {
+                  LayoutBuilder(
+                    builder: (context, constraints) {
                     final bool isWide = constraints.maxWidth >= 900;
-                      final Widget mainList = Column(
-                        children: [
-                          // Tombol All / My post
-                          Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 600),
-                              child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 16),
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.03),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        ChoiceChip(
-                                          label: const Text('All Posts'),
-                                          selected: !myPost,
-                                          onSelected: (_) {
-                                            setState(() {
-                                              myPost = false;
-                                              currentPage = 0;
-                                            });
-                                          },
-                                        ),
-                                        const SizedBox(width: 8),
-                                        ChoiceChip(
-                                          label: const Text('My Posts'),
-                                          selected: myPost,
-                                          onSelected: (_) {
-                                            if (!widget.isLoggedIn || currentUserId == null) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text('Please login first to see your posts'),
-                                                ),
-                                              );
-                                              return;
-                                            }
-                                            setState(() {
-                                              myPost = true;
-                                              currentPage = 0;
-                                            });
-                                          },
-                                        ),
-                                      ],
-                                    ),
+                    final Widget mainList = 
+                    Column(
+                      children: [
+                      Center(
+                        child: 
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 600),
+                          child: 
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: 
+                              BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
-                                ),
+                                ],
                               ),
-
-                              const SizedBox(height: 8),
-
-                              // List Post
-                              if (pagePosts.isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 40),
-                                  child: Text(
-                                    'No posts yet in the community.',
-                                    style: TextStyle(fontSize: 14),
+                              // Tombol All / My post
+                            child: 
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Tombol All Post
+                                ChoiceChip(
+                                  label: const Text('All Posts'),
+                                  selected: !myPost,
+                                  onSelected: (_) {
+                                    setState(() {
+                                      myPost = false;
+                                      currentPage = 0;
+                                    });
+                                  },
                                   ),
-                                )
-                              else
-                                ListView.builder(
-                                  itemCount: pagePosts.length,
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  itemBuilder: (context, index) {
-                                    final post = pagePosts[index];
-                                    return Center(
-                                      child: ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 600),
-                                        child: ForumPostCard(
-                                          post: post,
-                                          isLoggedIn: widget.isLoggedIn,
-                                          onLike: () {
-                                            if (!widget.isLoggedIn) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Please Login First')),
-                                              );
-                                              return;
-                                            }
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Post liked!'),
-                                                duration: Duration(seconds: 1),
-                                              ),
-                                            );
-                                          },
-                                          canEdit: widget.isLoggedIn && currentUserId == post.userId,
-                                          onEdit: () async {
-                                            final changed =
-                                                await showEditPostDialog(context, post);
-                                            if (changed) reloadPost();
-                                          },
-                                          onDelete: () async {
-                                            final deleted =
-                                                await showDeletePostDialog(context, post);
-                                            if (deleted) reloadPost();
-                                          },
-                                        ),
-                                      ),
-                                    );
+                                  const SizedBox(width: 8),
+                                // Tombol My Post
+                                ChoiceChip(
+                                  label: const Text('My Posts'),
+                                  selected: myPost,
+                                  onSelected: (_) {
+                                    if (!_isLoggedInNow || currentUserId == null) {
+                                      _showAuthModal();
+                                      return;
+                                    }
+                                    setState(() {
+                                      myPost = true;
+                                      currentPage = 0;
+                                    });
                                   },
                                 ),
-
-                              const SizedBox(height: 24),
-                            ],
-                          );
-
-                          // Leaderboard Post
-                          final Widget leaderboard = ForumLeaderboardPost(
-                            allPosts: allPost, 
-                            isLoggedIn: widget.isLoggedIn, 
-                            onVote: _handleVote,
-                          );
-
-                          if (!isWide) {
-                            return Column(
-                              children: [
-                                leaderboard,
-                                mainList,
                               ],
-                            );
-                          } 
-                          else {
-                            return Center(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 1240),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Kolom kiri: leaderboard
-                                    Expanded(
-                                      child: Align(
-                                        alignment: Alignment.topCenter,
-                                        child: leaderboard,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 24), 
-                                    // Kolom kanan: main list
-                                    Expanded(
-                                      child: Align(
-                                        alignment: Alignment.topCenter,
-                                        child: mainList,
-                                      ),
-                                    ),
-                                  ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Post Empty Analyze
+                      if (pagePosts.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: 
+                          Text(
+                            'No posts yet in the community.',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        )
+                      else
+                        // Build Post Card
+                        ListView.builder(
+                          itemCount: pagePosts.length,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            final post = pagePosts[index];
+                            return 
+                            Center(
+                              child: 
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 600),
+                                child: 
+                                ForumPostCard(
+                                  post: post,
+                                  isLoggedIn: _isLoggedInNow,
+                                  onActionRequired: widget.onActionRequired,
+                                  // Validasi Login untuk Edit & Delete Post
+                                  canEdit: _isLoggedInNow && myPost && currentUserId == post.userId,
+                                  onEdit: () async {
+                                    final changed = await showEditPostDialog(context, post);
+                                    if (changed) reloadPost();
+                                  },
+                                  onDelete: () async {
+                                    final deleted = await showDeletePostDialog(context, post);
+                                    if (deleted) reloadPost();
+                                  },
+                                  onReplyVote: _handleReplyVote,
                                 ),
                               ),
                             );
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Footer Pagination
-              _PaginationBar(
-                currentPage: currentPage,
-                totalPages: totalPages,
-                totalItems: totalItems,
-                startIndex: startIndex,
-                endIndex: endIndex,
-                onPrev: currentPage > 0? () {setState(() {currentPage--;});} : null,
-                onNext: currentPage < totalPages - 1
-                            ? () {
-                                setState(() {
-                                  currentPage++;
-                                  });
-                                }
-                              : null,
-                            ),
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                    // Leaderboard Post
+                    final Widget leaderboard = 
+                      ForumLeaderboardPost(
+                        allPosts: allPost, 
+                        isLoggedIn: _isLoggedInNow, 
+                        onVote: _handleVote,
+                      );
+                      if (!isWide) {
+                        return 
+                        Column(
+                          children: [
+                          leaderboard,
+                          mainList,
                           ],
                         );
-                      },
-                    ),
-                  )
-                );
-              }
-            }
+                      } 
+                      else {
+                        return 
+                        Center(
+                          child: 
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1240),
+                            child: 
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                              // Kolom kiri: leaderboard
+                              Expanded(
+                                child: 
+                                Align(
+                                  alignment: Alignment.topCenter,
+                                  child: leaderboard,
+                                ),
+                              ),
+                              const SizedBox(width: 24), 
+                              // Kolom kanan: main list
+                              Expanded(
+                                child: 
+                                Align(
+                                  alignment: Alignment.topCenter,
+                                  child: mainList,
+                                ),
+                              ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+                ),
+              ),
+            ),
+            // Footer Pagination
+            _PaginationBar(
+              currentPage: currentPage,
+              totalPages: totalPages,
+              totalItems: totalItems,
+              startIndex: startIndex,
+              endIndex: endIndex,
+              onPrev: currentPage > 0 ? () {
+                setState(() {
+                  currentPage--;
+                });
+              } : null,
+              onNext: currentPage < totalPages - 1 ? () {
+                setState(() {
+                  currentPage++;
+                });
+              } : null,
+            ),
+            ],
+          );
+        },
+      ),
+    )
+  );
+  } 
+}
 
 class _ForumHeader extends StatelessWidget {
   final VoidCallback onRefresh;

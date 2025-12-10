@@ -107,7 +107,7 @@ class _LeaderboardPostTile extends StatefulWidget {
 class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
     with SingleTickerProviderStateMixin {
   bool showReplies = false;
-  bool _hasVoted = false;  
+  bool isVoting = false;  
   late final AnimationController _controller;
   late final Animation<double> _sizeAnimation;
 
@@ -154,6 +154,7 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             // Badge rank
             Container(
               width: 28,
@@ -303,19 +304,23 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: () async {
-        if (_hasVoted) return;
-        if (!widget.isLoggedIn) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please login first')),
-          );
-          return;
-        }
+        if (isVoting) return;
 
         setState(() {
-          _hasVoted = true;
+          isVoting = true;
         });
 
-        await widget.onVote(widget.post, isUpvote);
+        
+        try {
+          await widget.onVote(widget.post, isUpvote);
+        } 
+        finally {
+          if (mounted) {
+            setState(() {
+              isVoting = false;  
+            });
+          }
+        }
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

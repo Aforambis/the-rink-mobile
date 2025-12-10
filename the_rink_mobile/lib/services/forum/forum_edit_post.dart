@@ -21,7 +21,7 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
           Future<void> submit() async {
             final title = titleController.text.trim();
             final content = contentController.text.trim();
-            final thumb = thumbController.text.trim();
+            final thumbnail = thumbController.text.trim();
 
             if (title.isEmpty || content.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -40,7 +40,7 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
                 {
                   'title': title,
                   'content': content,
-                  'thumbnail_url': thumb,
+                  'thumbnail_url': thumbnail,
                 },
               );
 
@@ -71,17 +71,23 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text('Edit Post'),
+
+            // Header
+            title: const Text('Edit Your Post'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+
+                  // Title
                   TextField(
                     controller: titleController,
                     decoration: const InputDecoration(
                       labelText: 'Title',
                     ),
                   ),
+
+                  // Content
                   const SizedBox(height: 8),
                   TextField(
                     controller: contentController,
@@ -90,6 +96,8 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
                       labelText: 'Content',
                     ),
                   ),
+
+                  // Thumbnail URL
                   const SizedBox(height: 8),
                   TextField(
                     controller: thumbController,
@@ -101,12 +109,15 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
               ),
             ),
             actions: [
+              // Cancel Button
               TextButton(
                 onPressed: isSaving ? null : () {
                   Navigator.of(ctx).pop(false);
                 },
                 child: const Text('Cancel'),
               ),
+
+              // Save Button
               ElevatedButton(
                 onPressed: isSaving ? null : submit,
                 child: isSaving

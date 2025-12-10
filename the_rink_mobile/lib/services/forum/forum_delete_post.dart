@@ -14,15 +14,21 @@ Future<bool> showDeletePostDialog(BuildContext context, Post post) async {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
+
+        // Header
         title: const Text('Delete Post'),
         content: const Text(
           'Are you sure you want to delete this post? This action cannot be undone.',
         ),
         actions: [
+
+          // Cancel Button
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Cancel'),
           ),
+
+          // Delete Button 
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),

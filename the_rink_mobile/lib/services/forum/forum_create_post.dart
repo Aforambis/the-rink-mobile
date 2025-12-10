@@ -32,16 +32,9 @@ class _ForumCreatePostCardState extends State<ForumCreatePostCard> {
   }
 
   Future<void> _handleSubmit() async {
-    if (!widget.isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please Login First')),
-      );
-      return;
-    }
-
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
-    final thumb = _thumbnailController.text.trim();
+    final thumbnail = _thumbnailController.text.trim();
 
     if (title.isEmpty || content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -63,7 +56,7 @@ class _ForumCreatePostCardState extends State<ForumCreatePostCard> {
         {
           'title': title,
           'content': content,
-          'thumbnail_url': thumb,
+          'thumbnail_url': thumbnail,
         },
       );
 
@@ -71,7 +64,7 @@ class _ForumCreatePostCardState extends State<ForumCreatePostCard> {
         throw Exception(response['message'] ?? 'Unknown error');
       }
 
-      // clear form setelah sukses
+      // Clear form setelah sukses
       _titleController.clear();
       _contentController.clear();
       _thumbnailController.clear();
@@ -126,6 +119,7 @@ Widget build(BuildContext context) {
             mainAxisSize: MainAxisSize.min,         
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
               // Header
               const Text(
                 'What do you think?',
@@ -168,7 +162,7 @@ Widget build(BuildContext context) {
               ),
               const SizedBox(height: 10),
 
-              // Footer row: Thumbnail URL + Post button
+              // Footer : Thumbnail URL + Post button
               Row(
                 children: [
                   Expanded(

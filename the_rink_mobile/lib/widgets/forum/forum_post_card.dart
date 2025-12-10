@@ -1,25 +1,30 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:the_rink_mobile/widgets/auth_modal_sheet.dart';
 import '../../models/forum.dart';
 import 'forum_reply_card.dart';
 
 class ForumPostCard extends StatefulWidget {
   final Post post;
   final bool isLoggedIn;
-  final VoidCallback onLike;
-
-  // 🔹 baru
-  final bool canEdit;                 // boleh lihat tombol edit/delete?
-  final VoidCallback? onEdit;         // callback edit
-  final VoidCallback? onDelete;       // callback delete
+  final bool canEdit;    
+  final VoidCallback onActionRequired;
+  final VoidCallback? onEdit;    
+  final VoidCallback? onDelete;     
+  final Future<void> Function(Reply reply, bool isUpvote) onReplyVote;
 
   const ForumPostCard({
     super.key,
     required this.post,
     required this.isLoggedIn,
-    required this.onLike,
     this.canEdit = false,
+    required this.onActionRequired,
     this.onEdit,
     this.onDelete,
+    required this.onReplyVote,
   });
 
   @override
@@ -28,8 +33,13 @@ class ForumPostCard extends StatefulWidget {
 
 class _ForumPostCardState extends State<ForumPostCard>
     with SingleTickerProviderStateMixin {
-  bool isLike = false;
+  bool isVoting = false;
   bool showReplies = false;
+
+   // ⬇️ baru
+  late TextEditingController _replyController;
+  late FocusNode _replyFocusNode;
+  bool _isSendingReply = false;
 
   late AnimationController repliesController;
   late Animation<double> repliesAnimation;
@@ -49,11 +59,16 @@ class _ForumPostCardState extends State<ForumPostCard>
       parent: repliesController,
       curve: Curves.easeInOut,
     );
+
+     _replyController = TextEditingController();
+    _replyFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
     repliesController.dispose();
+    _replyController.dispose();
+    _replyFocusNode.dispose();
     super.dispose();
   }
 
@@ -66,6 +81,316 @@ class _ForumPostCardState extends State<ForumPostCard>
         repliesController.reverse();
       }
     });
+  }
+
+  void _mentionUserFromReply(Reply reply) {
+    final mention = '@${reply.author} ';
+    setState(() {
+      _replyController.text = mention;
+      _replyController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _replyController.text.length),
+      );
+    });
+    _replyFocusNode.requestFocus();
+  }
+
+  Future<void> _sendReply() async {
+    final text = _replyController.text.trim();
+    if (text.isEmpty) return;
+
+    if (!widget.isLoggedIn) {
+      _showAuthModal();
+      return;
+    }
+
+    setState(() => _isSendingReply = true);
+
+    try {
+      final request = context.read<CookieRequest>();
+
+      final response = await request.postJson(
+        'http://localhost:8000/forum/add-reply-flutter/${widget.post.id}/',
+        {
+          'content': text,
+        },
+      ) as Map<String, dynamic>;
+
+      // backend balikin { success: true, reply: {...} }
+      final newReply = Reply.fromJson(response['reply']);
+
+      setState(() {
+        widget.post.replies.add(newReply);
+        widget.post.repliesCount = widget.post.replies.length;
+        _replyController.clear();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send reply: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSendingReply = false);
+    }
+  }
+
+
+    Widget buildThumbnail() {
+    final String? url = widget.post.thumbnailUrl;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 80,
+        height: 80,
+        color: const Color(0xFFF3F4F6),
+        child: url != null && url.isNotEmpty
+            ? Image.network(url, fit: BoxFit.cover)
+            : const Icon(
+                Icons.image,
+                size: 32,
+                color: Colors.grey,
+              ),
+      ),
+    );
+  }
+
+  // Tombol kecil untuk Edit / Delete
+  Widget _buildSmallAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color background,
+    required VoidCallback? onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildVote(
+    {
+    required IconData icon,
+    required Color color,
+    required Color background,
+    required int count,
+    required VoidCallback onTap,
+    }) 
+    {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  bool get isLoggedIn {
+    final request = context.read<CookieRequest>();
+    return request.jsonData['status'] == true;
+  }
+
+  Future<void> handleVote(Post post, bool isUpvote) async {
+    if (isVoting) return; 
+
+    if (!isLoggedIn) {
+      _showAuthModal();
+      return;
+    }
+
+    setState(() {
+      isVoting = true;         
+    });
+
+    try {
+      final request = context.read<CookieRequest>();
+      final response = await request.postJson(
+        'http://localhost:8000/forum/toggle-vote-flutter/',
+        jsonEncode({
+          'type': 'post',
+          'id': post.id,
+          'is_upvote': isUpvote,
+        }),
+      ) as Map<String, dynamic>;
+
+      setState(() {
+        post.upvotesCount  = (response['upvotes']  ?? post.upvotesCount)  as int;
+        post.downvotesCount = (response['downvotes'] ?? post.downvotesCount) as int;
+      });
+    } 
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to vote: $e')),
+      );
+    }
+    finally {
+    if (mounted) {
+      setState(() {
+        isVoting = false;      
+      });
+    }
+  }
+  }
+
+  void _showAuthModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return AuthModalSheet(
+
+          // Google
+          onGoogleSignIn: () {
+            Navigator.of(sheetContext).pop();
+            widget.onActionRequired(); 
+          },
+
+          // Login/Register Biasa
+          onUsernamePasswordSignIn: () {
+            Navigator.of(sheetContext).pop();
+            widget.onActionRequired(); 
+          },
+
+          // Guest Access
+          onContinueAsGuest: () {
+            Navigator.of(sheetContext).pop();
+          },
+        );
+      },
+    );
+  }
+
+    Widget buildRepliesList() {
+    final replies = widget.post.replies;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (replies.isEmpty)
+          const Text(
+            'Belum ada reply. Jadilah yang pertama berkomentar',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey,
+            ),
+          )
+        else
+          for (int i = 0; i < replies.length; i++) ...[
+            ForumReplyCard(
+              reply: replies[i],
+              showDivider: i != replies.length - 1,
+              // ⬇️ like/dislike reply → panggil endpoint vote reply
+              onLike: () => widget.onReplyVote(replies[i], true),
+              onDislike: () => widget.onReplyVote(replies[i], false),
+              // ⬇️ klik "Reply" → auto mention
+              onReplyTap: () => _mentionUserFromReply(replies[i]),
+            ),
+          ],
+
+        const SizedBox(height: 12),
+
+        // ====== INPUT BALASAN DI BAWAHNYA ======
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _replyController,
+                focusNode: _replyFocusNode,
+                decoration: InputDecoration(
+                  hintText: 'Tulis balasan...',
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(999),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(999),
+                    borderSide: const BorderSide(color: _primaryBlue),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 36,
+              child: ElevatedButton(
+                onPressed: _isSendingReply ? null : _sendReply,
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  backgroundColor: _primaryBlue,
+                  foregroundColor: Colors.white,
+                ),
+                child: _isSendingReply
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text(
+                        'Send',
+                        style: TextStyle(fontSize: 13),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+
+  String formatDate(DateTime dt) {
+    final d = dt.toLocal();
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final mm = monthNames[d.month - 1];
+    return '$mm ${d.day}, ${d.year}';
   }
 
   @override
@@ -86,26 +411,31 @@ class _ForumPostCardState extends State<ForumPostCard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             // ===== HEADER =====
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildThumbnail(),
+                buildThumbnail(),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+
+                      // Tanggal Rilis Post
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          _formatDate(post.createdAt),
+                          formatDate(post.createdAt),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade500,
                           ),
                         ),
                       ),
+
+                      // Title
                       const SizedBox(height: 6),
                       Text(
                         post.title,
@@ -115,6 +445,8 @@ class _ForumPostCardState extends State<ForumPostCard>
                           color: _textDark,
                         ),
                       ),
+
+                      // Content
                       const SizedBox(height: 4),
                       Text(
                         post.content,
@@ -162,7 +494,7 @@ class _ForumPostCardState extends State<ForumPostCard>
 
                 const Spacer(),
 
-                // 🔹 Edit & Delete (kalau boleh)
+                // Edit & Delete (kalau punya user)
                 if (widget.canEdit) ...[
                   _buildSmallAction(
                     icon: Icons.edit_outlined,
@@ -182,13 +514,13 @@ class _ForumPostCardState extends State<ForumPostCard>
                   const SizedBox(width: 12),
                 ],
 
-                // Like / Dislike
+                // Like / DisVoting
                 buildVote(
                   icon: Icons.thumb_up,
                   color: const Color(0xFF16A34A),
                   background: const Color(0xFFE6F9ED),
-                  count: post.upvotesCount + (isLike ? 1 : 0),
-                  onTap: handleVote,
+                  count: post.upvotesCount,
+                  onTap: () => handleVote(post, true),
                 ),
                 const SizedBox(width: 8),
                 buildVote(
@@ -196,7 +528,7 @@ class _ForumPostCardState extends State<ForumPostCard>
                   color: const Color(0xFFEF4444),
                   background: const Color(0xFFFFE6E6),
                   count: post.downvotesCount,
-                  onTap: handleVote,
+                  onTap: () => handleVote(post, false),
                 ),
               ],
             ),
@@ -240,152 +572,5 @@ class _ForumPostCardState extends State<ForumPostCard>
         ),
       ),
     );
-  }
-
-  Widget _buildThumbnail() {
-    final String? url = widget.post.thumbnailUrl;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 80,
-        height: 80,
-        color: const Color(0xFFF3F4F6),
-        child: url != null && url.isNotEmpty
-            ? Image.network(url, fit: BoxFit.cover)
-            : const Icon(
-                Icons.image,
-                size: 32,
-                color: Colors.grey,
-              ),
-      ),
-    );
-  }
-
-  // 🔹 chip kecil untuk Edit / Delete
-  Widget _buildSmallAction({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required Color background,
-    required VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: () {
-        if (!widget.isLoggedIn) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please Login First')),
-          );
-          return;
-        }
-        if (onTap != null) onTap();
-      },
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildVote({
-    required IconData icon,
-    required Color color,
-    required Color background,
-    required int count,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 4),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void handleVote() {
-    if (!widget.isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please Login First')),
-      );
-      return;
-    }
-    if (isLike) return;
-
-    setState(() {
-      isLike = true;
-    });
-    widget.onLike();
-  }
-
-  Widget buildRepliesList() {
-    final replies = widget.post.replies;
-
-    if (replies.isEmpty) {
-      return const Text(
-        'Belum ada reply. Jadilah yang pertama berkomentar',
-        style: TextStyle(
-          fontSize: 13,
-          color: Colors.grey,
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        for (int i = 0; i < replies.length; i++) ...[
-          ForumReplyCard(
-            reply: replies[i],
-            showDivider: i != replies.length - 1,
-          ),
-        ],
-      ],
-    );
-  }
-
-  String _formatDate(DateTime dt) {
-    final d = dt.toLocal();
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final mm = monthNames[d.month - 1];
-    return '$mm ${d.day}, ${d.year}';
   }
 }
