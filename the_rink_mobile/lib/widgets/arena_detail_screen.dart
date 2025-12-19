@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart'; 
 
 import '../models/booking_arena.dart';
-import '../theme/app_theme.dart'; // Sesuaikan import theme lu
+import '../theme/app_theme.dart'; 
 
 class ArenaDetailScreen extends StatefulWidget {
   final Arena arena;
@@ -18,7 +18,6 @@ class ArenaDetailScreen extends StatefulWidget {
 
 class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
   DateTime _selectedDate = DateTime.now();
-  // List booking yang udah ada di tanggal & arena ini
   List<Booking> _existingBookings = [];
   bool _isLoading = true;
 

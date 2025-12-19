@@ -7,13 +7,13 @@ import '../widgets/arena_card.dart';
 class ArenaBookingScreen extends StatelessWidget {
   final List<Arena> arenas;
   final bool isLoggedIn;
-  final VoidCallback onActionRequired; // <--- 1. Tambahin ini
+  final VoidCallback onActionRequired; 
 
   const ArenaBookingScreen({
     super.key,
     required this.arenas,
     required this.isLoggedIn,
-    required this.onActionRequired, // <--- 2. Wajib diisi
+    required this.onActionRequired, 
   });
 
   @override
