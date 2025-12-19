@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
@@ -37,11 +39,11 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
             try {
               final response = await request.postJson(
                 'http://localhost:8000/forum/edit-post-flutter/${post.id}/',
-                {
+                jsonEncode({
                   'title': title,
                   'content': content,
                   'thumbnail_url': thumbnail,
-                },
+                }),
               );
 
               if (response['status'] == 'success') {
@@ -49,7 +51,8 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
                   const SnackBar(content: Text('Post updated')),
                 );
                 Navigator.of(ctx).pop(true); 
-              } else {
+              } 
+              else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -58,56 +61,60 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
                   ),
                 );
               }
-            } catch (e) {
+            } 
+            catch (error) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error: $e')),
+                SnackBar(content: Text('Error: $error')),
               );
-            } finally {
+            } 
+            finally {
               setState(() => isSaving = false);
             }
           }
 
           return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            shape: 
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
 
             // Header
             title: const Text('Edit Your Post'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+            content: 
+              SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
 
-                  // Title
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Title',
+                    // Title
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Title',
+                      ),
                     ),
-                  ),
 
-                  // Content
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: contentController,
-                    maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'Content',
+                    // Content
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: contentController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Content',
+                      ),
                     ),
-                  ),
 
-                  // Thumbnail URL
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: thumbController,
-                    decoration: const InputDecoration(
-                      labelText: 'Thumbnail URL',
+                    // Thumbnail URL
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: thumbController,
+                      decoration: const InputDecoration(
+                        labelText: 'Thumbnail URL',
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             actions: [
               // Cancel Button
               TextButton(
@@ -120,13 +127,14 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
               // Save Button
               ElevatedButton(
                 onPressed: isSaving ? null : submit,
-                child: isSaving
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
+                child: isSaving ? 
+                  const SizedBox(
+                    height: 16,
+                    width: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                  : 
+                  const Text('Save'),
               ),
             ],
           );

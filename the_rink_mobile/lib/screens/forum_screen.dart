@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
-
+import '../theme/app_theme.dart';
 import '../models/forum.dart';
-
+import '../auth/login.dart';
 import '../widgets/forum/forum_post_card.dart';
-import '../widgets/forum/forum_post_search_bar.dart';
+import '../services/forum/forum_post_search_bar.dart';
 import '../widgets/auth_modal_sheet.dart'; 
 
 import '../services/forum/forum_create_post.dart'; 
@@ -17,11 +17,9 @@ import '../services/forum/forum_filter_post.dart';
 import '../services/forum/forum_leaderboard_post.dart';
 
 class ForumScreen extends StatefulWidget {
-  final VoidCallback onActionRequired;
 
   const ForumScreen({
     super.key,
-    required this.onActionRequired,
   });
 
   @override
@@ -34,7 +32,16 @@ class _ForumScreenState extends State<ForumScreen> {
   int currentPage = 0;
   bool myPost = false;
   bool initialized = false;
+  final TextEditingController _searchController = TextEditingController();
   String searchTitle = '';
+  String draftSearchTitle = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   late Future<List<Post>> futurePosts;
 
   Future<List<Post>> fetchPosts(CookieRequest request) async {
@@ -119,28 +126,37 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
-  void _showAuthModal() {
+    void _showAuthModal() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return AuthModalSheet(
-          onGoogleSignIn: () {     // Google
-            Navigator.of(sheetContext).pop();
-            widget.onActionRequired(); 
-          },
-          onUsernamePasswordSignIn: () {    // Login/Register Biasa
-            Navigator.of(sheetContext).pop();
-            widget.onActionRequired(); 
-          },
-          onContinueAsGuest: () {    // Guest Access
-            Navigator.of(sheetContext).pop();
-          },
-        );
-      },
+      builder: (context) => AuthModalSheet(
+        onGoogleSignIn: () {
+          Navigator.pop(context);
+          // Mock Google sign-in - in real app, handle actual login
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Google sign-in not implemented yet.'),
+              backgroundColor: AppColors.frostPrimary,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
+        onUsernamePasswordSignIn: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        },
+        onContinueAsGuest: () {
+          Navigator.pop(context);
+        },
+      ),
     );
   }
+
 
   Future<void> _handleVote(Post post, bool isUpvote) async {
     if (!_isLoggedInNow) {
@@ -271,16 +287,21 @@ class _ForumScreenState extends State<ForumScreen> {
                 Column(
                   children: [
 
-                  // Header (Title + Tombol Create Post)
+                  // Header
                   _ForumHeader(
                     onRefresh: reloadPost,
-                    onSearchChanged: (value) {
-                    setState(() {
-                      searchTitle = value;
-                      currentPage = 0;
-                    });
-                    },
                     onCreatePressed: openCreatePostSnackbar,
+
+                    searchController: _searchController,
+                    onSearchChanged: (value) {
+                      draftSearchTitle = value; 
+                    },
+                    onSearchPressed: () {
+                      setState(() {
+                        searchTitle = _searchController.text.trim();
+                        currentPage = 0;
+                      });
+                    },
                   ),
 
                   LayoutBuilder(
@@ -314,33 +335,58 @@ class _ForumScreenState extends State<ForumScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Tombol All Post
-                                ChoiceChip(
-                                  label: const Text('All Posts'),
-                                  selected: !myPost,
-                                  onSelected: (_) {
-                                    setState(() {
-                                      myPost = false;
-                                      currentPage = 0;
-                                    });
-                                  },
-                                  ),
-                                  const SizedBox(width: 8),
-                                // Tombol My Post
-                                ChoiceChip(
-                                  label: const Text('My Posts'),
-                                  selected: myPost,
-                                  onSelected: (_) {
-                                    if (!_isLoggedInNow || currentUserId == null) {
-                                      _showAuthModal();
-                                      return;
-                                    }
-                                    setState(() {
-                                      myPost = true;
-                                      currentPage = 0;
-                                    });
-                                  },
-                                ),
+                                // All Posts
+ChoiceChip(
+  label: const Text('All Posts'),
+  selected: !myPost,
+  backgroundColor: Colors.white,                 // UNSELECTED
+  selectedColor: AppColors.frostPrimary,         // SELECTED (biru)
+  showCheckmark: false,
+  labelStyle: TextStyle(
+    fontWeight: FontWeight.w600,
+    color: !myPost ? Colors.white : AppColors.frostPrimary, // selected -> putih, unselected -> biru
+  ),
+  side: BorderSide(
+    color: AppColors.frostPrimary,
+    width: 1,
+  ),
+  onSelected: (_) {
+    setState(() {
+      myPost = false;
+      currentPage = 0;
+    });
+  },
+),
+
+const SizedBox(width: 8),
+
+// My Posts
+ChoiceChip(
+  label: const Text('My Posts'),
+  selected: myPost,
+  backgroundColor: Colors.white,                 // UNSELECTED
+  selectedColor: AppColors.frostPrimary,         // SELECTED (biru)
+  showCheckmark: false,
+  labelStyle: TextStyle(
+    fontWeight: FontWeight.w600,
+    color: myPost ? Colors.white : AppColors.frostPrimary,  // selected -> putih, unselected -> biru
+  ),
+  side: BorderSide(
+    color: AppColors.frostPrimary,
+    width: 1,
+  ),
+  onSelected: (_) {
+    if (!_isLoggedInNow || currentUserId == null) {
+      _showAuthModal();
+      return;
+    }
+    setState(() {
+      myPost = true;
+      currentPage = 0;
+    });
+  },
+),
+
                               ],
                             ),
                           ),
@@ -374,7 +420,6 @@ class _ForumScreenState extends State<ForumScreen> {
                                 ForumPostCard(
                                   post: post,
                                   isLoggedIn: _isLoggedInNow,
-                                  onActionRequired: widget.onActionRequired,
                                   // Validasi Login untuk Edit & Delete Post
                                   canEdit: _isLoggedInNow && myPost && currentUserId == post.userId,
                                   onEdit: () async {
@@ -478,14 +523,18 @@ class _ForumScreenState extends State<ForumScreen> {
 class _ForumHeader extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback onCreatePressed;
+
+  final TextEditingController searchController;
   final ValueChanged<String> onSearchChanged;
+  final VoidCallback onSearchPressed;
 
   const _ForumHeader({
     required this.onRefresh,
-    required this.onSearchChanged,
     required this.onCreatePressed,
+    required this.searchController,
+    required this.onSearchChanged,
+    required this.onSearchPressed,
   });
-
 
   @override
   Widget build(BuildContext context) {
@@ -510,7 +559,6 @@ class _ForumHeader extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Title
           const Text(
             'Forum Community',
             style: TextStyle(
@@ -521,7 +569,6 @@ class _ForumHeader extends StatelessWidget {
           ),
           const SizedBox(height: 4),
 
-          // Hastag
           const Text(
             'Where ideas grow, and connections come alive',
             textAlign: TextAlign.center,
@@ -532,7 +579,6 @@ class _ForumHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Refresh Button
           SizedBox(
             height: 40,
             child: ElevatedButton.icon(
@@ -543,7 +589,7 @@ class _ForumHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 elevation: 0,
-                backgroundColor: const Color(0xFF2563EB),
+                backgroundColor: AppColors.frostPrimary,
                 foregroundColor: Colors.white,
               ),
               icon: const Icon(Icons.refresh, size: 18),
@@ -558,14 +604,13 @@ class _ForumHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Create Post Button
           SizedBox(
             height: 36,
-            child: OutlinedButton.icon(
+            child: ElevatedButton.icon(
               onPressed: onCreatePressed,
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF2563EB)),
-                foregroundColor: const Color(0xFF2563EB),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.frostPrimary,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
@@ -574,18 +619,20 @@ class _ForumHeader extends StatelessWidget {
               icon: const Icon(Icons.edit_outlined, size: 18),
               label: const Text(
                 'Create a New Post',
-                style: TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ),
           const SizedBox(height: 16),
 
-         // Search Post Box
-         Center(
+          // Search Post Box
+          Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 600),
               child: ForumPostSearchBar(
+                controller: searchController,
                 onChanged: onSearchChanged,
+                onSearchPressed: onSearchPressed,
               ),
             ),
           ),
@@ -594,6 +641,7 @@ class _ForumHeader extends StatelessWidget {
     );
   }
 }
+
 
 class _PaginationBar extends StatelessWidget {
   final int currentPage;
@@ -652,7 +700,7 @@ class _PaginationBar extends StatelessWidget {
                 Text(
                   totalItems == 0
                       ? '0 of 0'
-                      : '${startIndex + 1}–$endIndex of $totalItems',
+                      : '${startIndex + 1} – $endIndex of $totalItems',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,

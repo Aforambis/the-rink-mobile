@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
@@ -10,35 +12,37 @@ Future<bool> showDeletePostDialog(BuildContext context, Post post) async {
   final shouldDelete = await showDialog<bool>(
     context: context,
     builder: (ctx) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-
-        // Header
-        title: const Text('Delete Post'),
-        content: const Text(
-          'Are you sure you want to delete this post? This action cannot be undone.',
-        ),
-        actions: [
-
-          // Cancel Button
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-
-          // Delete Button 
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              foregroundColor: Colors.white,
+      return 
+        AlertDialog(
+          shape: 
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      );
+
+            // Header
+            title: const Text('Delete Post'),
+            content: const Text(
+              'Are you sure you want to delete this post? This action cannot be undone.',
+            ),
+          actions: [
+            // Cancel Button
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+
+            // Delete Button 
+            ElevatedButton(
+              style: 
+              ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEF4444),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
     },
   );
 
@@ -47,7 +51,7 @@ Future<bool> showDeletePostDialog(BuildContext context, Post post) async {
   try {
     final response = await request.postJson(
       'http://localhost:8000/forum/delete-post-flutter/${post.id}/',
-      {},
+      jsonEncode({}),
     );
 
     if (response['status'] == 'success') {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -43,6 +45,17 @@ class _ForumCreatePostCardState extends State<ForumCreatePostCard> {
       return;
     }
 
+    if (content.length > 300) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Content maksimal hanya terdiri dari 300 karakter (sekarang ${content.length}).',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (hasSubmitted) return;
 
     setState(() {
@@ -52,19 +65,19 @@ class _ForumCreatePostCardState extends State<ForumCreatePostCard> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.postJson(
-        'http://localhost:8000/forum/create-post-flutter/',
-        {
+        'http://localhost:8000/forum/add-post-flutter/',
+        jsonEncode({
           'title': title,
           'content': content,
           'thumbnail_url': thumbnail,
-        },
+        }),
       );
 
       if (response['status'] != 'success') {
         throw Exception(response['message'] ?? 'Unknown error');
       }
 
-      // Clear form setelah sukses
+      // Clear form setelah sukses submit
       _titleController.clear();
       _contentController.clear();
       _thumbnailController.clear();

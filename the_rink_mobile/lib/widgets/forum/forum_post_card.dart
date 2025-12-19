@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:the_rink_mobile/auth/login.dart';
+import 'package:the_rink_mobile/theme/app_theme.dart';
 import 'package:the_rink_mobile/widgets/auth_modal_sheet.dart';
 import '../../models/forum.dart';
 import 'forum_reply_card.dart';
@@ -11,7 +13,6 @@ class ForumPostCard extends StatefulWidget {
   final Post post;
   final bool isLoggedIn;
   final bool canEdit;    
-  final VoidCallback onActionRequired;
   final VoidCallback? onEdit;    
   final VoidCallback? onDelete;     
   final Future<void> Function(Reply reply, bool isUpvote) onReplyVote;
@@ -21,7 +22,6 @@ class ForumPostCard extends StatefulWidget {
     required this.post,
     required this.isLoggedIn,
     this.canEdit = false,
-    required this.onActionRequired,
     this.onEdit,
     this.onDelete,
     required this.onReplyVote,
@@ -31,16 +31,12 @@ class ForumPostCard extends StatefulWidget {
   State<ForumPostCard> createState() => _ForumPostCardState();
 }
 
-class _ForumPostCardState extends State<ForumPostCard>
-    with SingleTickerProviderStateMixin {
+class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProviderStateMixin {
   bool isVoting = false;
   bool showReplies = false;
-
-   // ⬇️ baru
   late TextEditingController _replyController;
   late FocusNode _replyFocusNode;
   bool _isSendingReply = false;
-
   late AnimationController repliesController;
   late Animation<double> repliesAnimation;
 
@@ -54,12 +50,10 @@ class _ForumPostCardState extends State<ForumPostCard>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
-
     repliesAnimation = CurvedAnimation(
       parent: repliesController,
       curve: Curves.easeInOut,
     );
-
      _replyController = TextEditingController();
     _replyFocusNode = FocusNode();
   }
@@ -102,36 +96,31 @@ class _ForumPostCardState extends State<ForumPostCard>
       _showAuthModal();
       return;
     }
-
     setState(() => _isSendingReply = true);
-
     try {
       final request = context.read<CookieRequest>();
-
       final response = await request.postJson(
         'http://localhost:8000/forum/add-reply-flutter/${widget.post.id}/',
-        {
+        jsonEncode({
           'content': text,
-        },
+        }),
       ) as Map<String, dynamic>;
-
-      // backend balikin { success: true, reply: {...} }
-      final newReply = Reply.fromJson(response['reply']);
-
+      final newReply = Reply.fromJson(response);
       setState(() {
         widget.post.replies.add(newReply);
         widget.post.repliesCount = widget.post.replies.length;
         _replyController.clear();
       });
-    } catch (e) {
+    } 
+    catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to send reply: $e')),
       );
-    } finally {
+    } 
+    finally {
       if (mounted) setState(() => _isSendingReply = false);
     }
   }
-
 
     Widget buildThumbnail() {
     final String? url = widget.post.thumbnailUrl;
@@ -153,8 +142,8 @@ class _ForumPostCardState extends State<ForumPostCard>
     );
   }
 
-  // Tombol kecil untuk Edit / Delete
-  Widget _buildSmallAction({
+  // Tombol untuk Edit / Delete
+  Widget buildEditDeleteIcon({
     required IconData icon,
     required String label,
     required Color color,
@@ -163,6 +152,7 @@ class _ForumPostCardState extends State<ForumPostCard>
   }) {
     return InkWell(
       borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
@@ -196,30 +186,31 @@ class _ForumPostCardState extends State<ForumPostCard>
     required VoidCallback onTap,
     }) 
     {
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 4),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
+    return 
+      InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 4),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
     );
   }
   
@@ -275,27 +266,29 @@ class _ForumPostCardState extends State<ForumPostCard>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return AuthModalSheet(
-
-          // Google
-          onGoogleSignIn: () {
-            Navigator.of(sheetContext).pop();
-            widget.onActionRequired(); 
-          },
-
-          // Login/Register Biasa
-          onUsernamePasswordSignIn: () {
-            Navigator.of(sheetContext).pop();
-            widget.onActionRequired(); 
-          },
-
-          // Guest Access
-          onContinueAsGuest: () {
-            Navigator.of(sheetContext).pop();
-          },
-        );
-      },
+      builder: (context) => AuthModalSheet(
+        onGoogleSignIn: () {
+          Navigator.pop(context);
+          // Mock Google sign-in - in real app, handle actual login
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Google sign-in not implemented yet.'),
+              backgroundColor: AppColors.frostPrimary,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
+        onUsernamePasswordSignIn: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        },
+        onContinueAsGuest: () {
+          Navigator.pop(context);
+        },
+      ),
     );
   }
 
@@ -318,10 +311,8 @@ class _ForumPostCardState extends State<ForumPostCard>
             ForumReplyCard(
               reply: replies[i],
               showDivider: i != replies.length - 1,
-              // ⬇️ like/dislike reply → panggil endpoint vote reply
               onLike: () => widget.onReplyVote(replies[i], true),
               onDislike: () => widget.onReplyVote(replies[i], false),
-              // ⬇️ klik "Reply" → auto mention
               onReplyTap: () => _mentionUserFromReply(replies[i]),
             ),
           ],
@@ -336,7 +327,7 @@ class _ForumPostCardState extends State<ForumPostCard>
                 controller: _replyController,
                 focusNode: _replyFocusNode,
                 decoration: InputDecoration(
-                  hintText: 'Tulis balasan...',
+                  hintText: 'Create Your Reply',
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   border: OutlineInputBorder(
@@ -345,7 +336,7 @@ class _ForumPostCardState extends State<ForumPostCard>
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(999),
-                    borderSide: const BorderSide(color: _primaryBlue),
+                    borderSide: const BorderSide(color: AppColors.frostPrimary),
                   ),
                 ),
               ),
@@ -361,7 +352,7 @@ class _ForumPostCardState extends State<ForumPostCard>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  backgroundColor: _primaryBlue,
+                  backgroundColor: AppColors.frostPrimary,
                   foregroundColor: Colors.white,
                 ),
                 child: _isSendingReply
@@ -449,9 +440,7 @@ class _ForumPostCardState extends State<ForumPostCard>
                       // Content
                       const SizedBox(height: 4),
                       Text(
-                        post.content,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        post.content,       
                         style: const TextStyle(
                           fontSize: 13,
                           height: 1.4,
@@ -496,7 +485,7 @@ class _ForumPostCardState extends State<ForumPostCard>
 
                 // Edit & Delete (kalau punya user)
                 if (widget.canEdit) ...[
-                  _buildSmallAction(
+                  buildEditDeleteIcon(
                     icon: Icons.edit_outlined,
                     label: 'Edit',
                     color: const Color(0xFF2563EB),
@@ -504,7 +493,7 @@ class _ForumPostCardState extends State<ForumPostCard>
                     onTap: widget.onEdit,
                   ),
                   const SizedBox(width: 8),
-                  _buildSmallAction(
+                  buildEditDeleteIcon(
                     icon: Icons.delete_outline,
                     label: 'Delete',
                     color: const Color(0xFFEF4444),

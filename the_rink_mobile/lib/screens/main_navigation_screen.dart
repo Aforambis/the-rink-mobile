@@ -144,9 +144,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 2:
         return const GearRentalScreen();
       case 3:
-        return ForumScreen(
-          onActionRequired: _showAuthModal,
-        );
+        return const ForumScreen();
       case 4:
         return ProfileScreen(
           isLoggedIn: context.read<CookieRequest>().loggedIn,
