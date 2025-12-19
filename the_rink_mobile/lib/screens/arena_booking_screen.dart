@@ -1,38 +1,73 @@
+// screens/arena_list_screen.dart
 import 'package:flutter/material.dart';
+import 'package:the_rink_mobile/theme/app_theme.dart';
+import '../models/booking_arena.dart';
+import '../widgets/arena_card.dart';
 
 class ArenaBookingScreen extends StatelessWidget {
-  const ArenaBookingScreen({super.key});
+  final List<Arena> arenas;
+  final bool isLoggedIn;
+  final VoidCallback onActionRequired; // <--- 1. Tambahin ini
+
+  const ArenaBookingScreen({
+    super.key,
+    required this.arenas,
+    required this.isLoggedIn,
+    required this.onActionRequired, // <--- 2. Wajib diisi
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Arena Booking'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.ice_skating_rounded,
-              size: 80,
-              color: Colors.grey[300],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Book Your Ice Time',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Select a time slot and reserve the rink',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ],
+        title: const Text('Booking'),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: AppColors.auroraGradient),
         ),
+        titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
+      ),
+      body: Container(
+        decoration: WinterTheme.pageBackground(),
+        child: ListView.builder(
+            // ...
+            itemBuilder: (context, index) {
+              final arena = arenas[index];
+              return ArenaCard(
+                arena: arena,
+                onTap: () {
+                  // Contoh: Kalo mau liat detail HARUS login
+                  // Kalo enggak login, panggil onActionRequired
+                  if (!isLoggedIn) {
+                    onActionRequired(); // <--- Panggil di sini
+                  } else {
+                    // Navigate ke detail
+                    ScaffoldMessenger.of(context).showSnackBar(
+                       SnackBar(content: Text('Opening ${arena.name}...')),
+                    );
+                  }
+                },
+              );
+            },
+          ),
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Contoh: Fitur ini butuh login
+          if (!isLoggedIn) {
+             onActionRequired(); // <--- Panggil di sini juga
+          } else {
+             // Jalanin fiturnya
+          }
+        },
+        backgroundColor: AppColors.frostPrimary,
+        child: const Icon(Icons.map_outlined, color: Colors.white),
       ),
     );
   }

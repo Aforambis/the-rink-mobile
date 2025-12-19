@@ -1,10 +1,12 @@
+// models/booking_arena.dart
+
 class Arena {
-  final String id;
+  final String id; // UUID di Django -> String di Dart
   final String name;
   final String description;
   final int capacity;
   final String location;
-  final String? imgUrl; // Nullable karena null=True
+  final String? imgUrl; // null=True di Django
   final String? openingHoursText;
   final String? googleMapsUrl;
 
@@ -19,7 +21,6 @@ class Arena {
     this.googleMapsUrl,
   });
 
-  // Factory buat bikin object dari JSON (biasanya dari API response)
   factory Arena.fromJson(Map<String, dynamic> json) {
     return Arena(
       id: json['id'] as String,
@@ -27,13 +28,13 @@ class Arena {
       description: json['description'] as String,
       capacity: json['capacity'] as int,
       location: json['location'] as String,
-      imgUrl: json['img_url'] as String?, // Perhatiin key-nya snake_case sesuai Django
+      // Mapping key snake_case dari Django
+      imgUrl: json['img_url'] as String?, 
       openingHoursText: json['opening_hours_text'] as String?,
       googleMapsUrl: json['google_maps_url'] as String?,
     );
   }
 
-  // Method buat balikin ke JSON (kalo mau POST data balik)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -49,8 +50,8 @@ class Arena {
 }
 
 class ArenaOpeningHours {
-  final int id; // Django default ID itu integer auto increment
-  final String arenaId; // Kita simpen ID-nya aja, bukan object Arena full
+  final int id; 
+  final String arenaId; // UUID Arena
   final int day;
   final String? openTime; // Format "HH:MM:SS"
   final String? closeTime;
@@ -63,7 +64,6 @@ class ArenaOpeningHours {
     this.closeTime,
   });
 
-  // Helper buat dapetin nama hari biar gak pusing angka doang
   String get dayName {
     const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
     if (day >= 0 && day < days.length) return days[day];
@@ -73,7 +73,7 @@ class ArenaOpeningHours {
   factory ArenaOpeningHours.fromJson(Map<String, dynamic> json) {
     return ArenaOpeningHours(
       id: json['id'] as int,
-      // Asumsi serializer lu ngirim arena_id, bukan nested arena object
+      // Asumsi serializer Django return arena_id sebagai string UUID
       arenaId: json['arena'] as String, 
       day: json['day'] as int,
       openTime: json['open_time'] as String?,
@@ -92,16 +92,16 @@ class ArenaOpeningHours {
   }
 }
 
-// Enum buat Status
+// --- ENUMS & BOOKING MODEL ---
+
 enum BookingStatus { booked, cancelled, completed, unknown }
 
-// Enum buat Activity
 enum BookingActivity { iceSkating, iceHockey, curling, other }
 
 class Booking {
-  final String id;
-  final String arenaId;
-  final int userId; // Asumsi default User Django ID-nya integer
+  final String id; // UUID
+  final String arenaId; // UUID
+  final int userId; // Integer (Default Django User ID)
   final DateTime date;
   final int startHour;
   final DateTime bookedAt;
@@ -124,11 +124,10 @@ class Booking {
       id: json['id'] as String,
       arenaId: json['arena'] as String,
       userId: json['user'] as int,
-      // Parsing string "YYYY-MM-DD" ke DateTime
       date: DateTime.parse(json['date'] as String), 
       startHour: json['start_hour'] as int,
       bookedAt: DateTime.parse(json['booked_at'] as String),
-      // Konversi String ke Enum (Safety first!)
+      // Mapping Status & Activity pas nerima data
       status: _mapStatus(json['status'] as String?),
       activity: _mapActivity(json['activity'] as String?),
     );
@@ -139,17 +138,25 @@ class Booking {
       'id': id,
       'arena': arenaId,
       'user': userId,
-      'date': date.toIso8601String().split('T').first, // Ambil tanggalnya aja
+      // Format Date YYYY-MM-DD
+      'date': date.toIso8601String().split('T').first, 
       'start_hour': startHour,
       'booked_at': bookedAt.toIso8601String(),
-      'status': status.name.capitalize(), // Balikin ke format text Django (opsional)
-      'activity': activity?.name, // Snake case handling mungkin butuh logic tambahan
+      
+      // Balikin Status ke Title Case ('Booked') sesuai choices Django
+      'status': status.name.capitalize(), 
+      
+      // Balikin Activity ke snake_case ('ice_skating') sesuai choices Django
+      'activity': _activityToSnakeCase(activity), 
     };
   }
 
-  // Helper methods buat mapping Enum
+  // --- HELPER METHODS ---
+
+  // Dari Django ('Booked') ke Dart Enum
   static BookingStatus _mapStatus(String? val) {
-    switch (val?.toLowerCase()) {
+    if (val == null) return BookingStatus.unknown;
+    switch (val.toLowerCase()) {
       case 'booked': return BookingStatus.booked;
       case 'cancelled': return BookingStatus.cancelled;
       case 'completed': return BookingStatus.completed;
@@ -157,19 +164,33 @@ class Booking {
     }
   }
 
+  // Dari Django ('ice_skating') ke Dart Enum
   static BookingActivity? _mapActivity(String? val) {
-    switch (val?.toLowerCase()) {
+    if (val == null) return null;
+    switch (val.toLowerCase()) {
       case 'ice_skating': return BookingActivity.iceSkating;
       case 'ice_hockey': return BookingActivity.iceHockey;
       case 'curling': return BookingActivity.curling;
-      default: return null;
+      default: return BookingActivity.other;
+    }
+  }
+
+  // Dari Dart Enum ke Django ('ice_skating') -> PENTING BIAR MATCH METADATA
+  String? _activityToSnakeCase(BookingActivity? val) {
+    if (val == null) return null;
+    switch (val) {
+      case BookingActivity.iceSkating: return 'ice_skating';
+      case BookingActivity.iceHockey: return 'ice_hockey';
+      case BookingActivity.curling: return 'curling';
+      default: return 'other';
     }
   }
 }
 
-// Extension kecil buat string manipulation kalo perlu
+// Extension sederhana biar gak perlu import library string ribet-ribet
 extension StringExtension on String {
   String capitalize() {
+    if (isEmpty) return this;
     return "${this[0].toUpperCase()}${substring(1)}";
   }
 }
