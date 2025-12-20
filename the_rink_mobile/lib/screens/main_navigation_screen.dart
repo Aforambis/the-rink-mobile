@@ -24,31 +24,46 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  // Mock data
+  // --- UPDATED MOCK DATA (Matches new Event model with participant counts) ---
   final List<Event> _featuredEvents = [
     Event(
-      id: '1',
-      title: 'Komet 3I/ATLAS Exhibition',
+      id: 1,
+      name: 'Komet 3I/ATLAS Exhibition',
       description: 'Special cosmic skating experience with projection mapping',
       date: 'Dec 25, 2024',
-      imageIcon: '🌠',
-      isFeatured: true,
+      time: '18:00',
+      location: 'Main Arena',
+      imageUrl: 'https://via.placeholder.com/150',
+      // New required fields
+      participantCount: 45,
+      maxParticipants: 100,
+      isRegistered: false,
     ),
     Event(
-      id: '2',
-      title: 'Open Skate Night',
+      id: 2,
+      name: 'Open Skate Night',
       description: 'Free skate session with live DJ and lights',
       date: 'Every Friday',
-      imageIcon: '⛸️',
-      isFeatured: true,
+      time: '20:00',
+      location: 'Rink B',
+      imageUrl: 'https://via.placeholder.com/150',
+      // New required fields
+      participantCount: 12,
+      maxParticipants: 50,
+      isRegistered: false,
     ),
     Event(
-      id: '3',
-      title: 'New Year Ice Gala',
+      id: 3,
+      name: 'New Year Ice Gala',
       description: 'Ring in the new year on ice!',
       date: 'Dec 31, 2024',
-      imageIcon: '🎉',
-      isFeatured: true,
+      time: '22:00',
+      location: 'Grand Hall',
+      imageUrl: 'https://via.placeholder.com/150',
+      // New required fields
+      participantCount: 150,
+      maxParticipants: 200,
+      isRegistered: false,
     ),
   ];
 
@@ -171,10 +186,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
-  Widget _getSelectedScreen() {
+  Widget _getSelectedScreen(CookieRequest request) {
     switch (_selectedIndex) {
       case 0:
         return HomeEventsScreen(
+          // Pass the fallback data (used if backend is empty/error)
           featuredEvents: _featuredEvents,
           packages: _packages,
           onActionRequired: _handleActionButton,
@@ -210,9 +226,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onSignIn: _showAuthModal,
         );
       default:
-        return const HomeEventsScreen(
-          featuredEvents: [],
-          packages: [],
+        return HomeEventsScreen(
+          featuredEvents: _featuredEvents,
+          packages: _packages,
           onActionRequired: null,
         );
     }
@@ -220,11 +236,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the CookieRequest provider to get login state
+    final request = context.watch<CookieRequest>();
+
     return Scaffold(
-      body: _getSelectedScreen(),
+      body: _getSelectedScreen(request),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: _onNavTap,
+        onTap: (index) => _onNavTap(index),
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),
