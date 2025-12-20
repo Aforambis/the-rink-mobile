@@ -616,9 +616,11 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     }
 
     final username = _sellerData?['username'] ?? 'Seller';
+    final fullName = _getDisplayValue(_sellerData?['full_name']) ?? username;
     final businessName = _getDisplayValue(_sellerData?['business_name']);
     final phoneNumber = _getDisplayValue(_sellerData?['phone_number']);
     final email = _getDisplayValue(_sellerData?['email']);
+    final dateOfBirth = _getDisplayValue(_sellerData?['date_of_birth']);
     final businessAddress = _getDisplayValue(_sellerData?['business_address']);
 
     return SingleChildScrollView(
@@ -710,18 +712,18 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   children: [
                     Expanded(
                       child: _buildInfoCard(
-                        icon: Icons.store,
-                        label: 'STORE NAME',
-                        value: businessName,
+                        icon: Icons.person,
+                        label: 'FULL NAME',
+                        value: fullName,
                         color: const Color(0xFF667eea),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: _buildInfoCard(
-                        icon: Icons.phone,
-                        label: 'PHONE NUMBER',
-                        value: phoneNumber,
+                        icon: Icons.store,
+                        label: 'STORE NAME',
+                        value: businessName,
                         color: const Color(0xFF28a745),
                       ),
                     ),
@@ -732,17 +734,39 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                   children: [
                     Expanded(
                       child: _buildInfoCard(
+                        icon: Icons.phone,
+                        label: 'PHONE NUMBER',
+                        value: phoneNumber,
+                        color: const Color(0xFF28a745),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildInfoCard(
                         icon: Icons.email,
                         label: 'EMAIL',
                         value: email,
                         color: const Color(0xFF17a2b8),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoCard(
+                        icon: Icons.calendar_today,
+                        label: 'DATE OF BIRTH',
+                        value: dateOfBirth,
+                        color: const Color(0xFFffc107),
+                      ),
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: _buildInfoCard(
                         icon: Icons.location_on,
-                        label: 'STORE ADDRESS',
+                        label: 'ADDRESS',
                         value: businessAddress,
                         color: const Color(0xFFdc3545),
                       ),
@@ -865,7 +889,20 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                     ),
                   )
                 else
-                  ..._products.map((product) => _buildProductCard(product)),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 0.75,
+                        ),
+                    itemCount: _products.length,
+                    itemBuilder: (context, index) =>
+                        _buildProductCard(_products[index]),
+                  ),
               ],
             ),
           ),
@@ -897,46 +934,53 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
   Widget _buildProductCard(Map<String, dynamic> product) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Image
           Container(
-            width: 60,
-            height: 60,
+            height: 120,
+            width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               color: Colors.grey[200],
             ),
             child: product['image_url']?.isNotEmpty ?? false
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
                     child: Image.network(
                       product['image_url'],
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
-                          Icon(Icons.image, color: Colors.grey[400]),
+                          Icon(Icons.image, color: Colors.grey[400], size: 40),
                     ),
                   )
-                : Icon(Icons.image, color: Colors.grey[400]),
+                : Icon(Icons.image, color: Colors.grey[400], size: 40),
           ),
-          const SizedBox(width: 16),
-          Expanded(
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   product['name'] ?? 'Unknown Product',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF333333),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -945,47 +989,57 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                           .replaceAll('_', ' ')
                           .toUpperCase() ??
                       'Unknown Category',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '\$${product['price_per_day']?.toStringAsFixed(2) ?? '0.00'}/day • Stock: ${product['stock'] ?? 0}',
+                  '\$${product['price_per_day']?.toStringAsFixed(2) ?? '0.00'}/day',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: Color(0xFF28a745),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                Text(
+                  'Stock: ${product['stock'] ?? 0}',
+                  style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Edit product feature coming soon'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: Color(0xFF17a2b8),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Delete product feature coming soon'),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.delete,
+                        size: 16,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-          ),
-          Column(
-            children: [
-              IconButton(
-                onPressed: () {
-                  // TODO: Implement edit product
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Edit product feature coming soon'),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.edit, color: Color(0xFF17a2b8)),
-                tooltip: 'Edit Product',
-              ),
-              IconButton(
-                onPressed: () {
-                  // TODO: Implement delete product
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Delete product feature coming soon'),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.delete, color: Colors.red),
-                tooltip: 'Delete Product',
-              ),
-            ],
           ),
         ],
       ),
