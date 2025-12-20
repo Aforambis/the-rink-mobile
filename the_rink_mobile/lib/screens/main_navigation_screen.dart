@@ -5,13 +5,14 @@ import '../models/event.dart';
 import '../models/package.dart';
 import '../models/community_post.dart';
 import '../screens/home_events_screen.dart';
-import '../screens/arena_booking_screen.dart';
+import '../screens/arena_list_screen.dart';
 import '../screens/gear_rental_screen.dart';
 import '../screens/community_screen.dart';
 import '../auth/custprofile.dart';
 import '../widgets/auth_modal_sheet.dart';
 import '../auth/login.dart';
 import '../theme/app_theme.dart';
+
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -65,6 +66,60 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       isRegistered: false,
     ),
   ];
+
+//   final List<Arena> _listArenas = [
+//   Arena(
+//     id: '1',
+//     name: 'Galactic Ice Rink Jakarta',
+//     description: 'Arena ice skating standar olimpiade pertama di Jakarta Selatan. Fasilitas lengkap dengan penyewaan sepatu premium dan pelatih profesional. Cocok buat date atau latihan serius.',
+//     capacity: 200,
+//     location: 'Gandaria City, Jakarta Selatan',
+//     imgUrl: 'https://images.unsplash.com/photo-1515706584606-e7e5d63f47e3?auto=format&fit=crop&q=80&w=1000', // Gambar Ice Rink
+//     openingHoursText: 'Senin - Minggu: 10:00 - 22:00',
+//     googleMapsUrl: 'https://maps.google.com',
+//   ),
+//   Arena(
+//     id: '2',
+//     name: 'Winter Wonderland BSD',
+//     description: 'Rasakan sensasi bermain salju dan ice skating di area semi-outdoor terbesar di Tangerang. Ada area khusus untuk pemula dan anak-anak.',
+//     capacity: 150,
+//     location: 'BSD City, Tangerang',
+//     imgUrl: 'https://images.unsplash.com/photo-1543788339-b9034cb8826c?auto=format&fit=crop&q=80&w=1000', 
+//     openingHoursText: 'Weekend Only: 08:00 - 20:00',
+//     googleMapsUrl: 'https://maps.google.com',
+//   ),
+//   Arena(
+//     id: '3',
+//     name: 'Puncak Frozen Arena',
+//     description: 'Arena curling dan hockey profesional di dataran tinggi. Udara sejuk alami ditambah dinginnya es bikin suasana makin autentik.',
+//     capacity: 500,
+//     location: 'Cisarua, Bogor',
+//     imgUrl: 'https://images.unsplash.com/photo-1580748141549-71748dbe0bdc?auto=format&fit=crop&q=80&w=1000', // Gambar Hockey
+//     openingHoursText: 'Setiap Hari: 06:00 - 23:00',
+//     googleMapsUrl: 'https://maps.google.com',
+//   ),
+//   Arena(
+//     id: '4',
+//     name: 'Mall of Ice Bandung',
+//     description: 'Tempat nongkrong sambil skating. Lokasi strategis di tengah kota Bandung.',
+//     capacity: 100,
+//     location: 'Paris Van Java, Bandung',
+//     // Sengaja dikosongin imgUrl-nya buat ngetes placeholder image lu jalan apa nggak
+//     imgUrl: null, 
+//     openingHoursText: '10:00 - 21:00',
+//     googleMapsUrl: 'https://maps.google.com',
+//   ),
+//   Arena(
+//     id: '5',
+//     name: 'Surabaya Polar Center',
+//     description: 'Pusat pelatihan atlet musim dingin nasional. Terbuka untuk umum pada jam tertentu. Wajib reservasi seminggu sebelumnya karena slot terbatas.',
+//     capacity: 1000,
+//     location: 'Kenjeran, Surabaya',
+//     imgUrl: 'https://images.unsplash.com/photo-1612959813568-154df67b2d5f?auto=format&fit=crop&q=80&w=1000',
+//     openingHoursText: 'Senin - Jumat: 16:00 - 22:00',
+//     googleMapsUrl: 'https://maps.google.com',
+//   ),
+// ];
 
   final List<Package> _packages = [
     Package(
@@ -195,7 +250,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onActionRequired: _handleActionButton,
         );
       case 1:
-        return const ArenaBookingScreen();
+        return ArenaListScreen(
+          onActionRequired: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+          },
+        );
+
       case 2:
         return const GearRentalScreen();
       case 3:
