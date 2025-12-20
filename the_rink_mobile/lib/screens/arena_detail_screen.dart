@@ -28,7 +28,6 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Pas layar dibuka, langsung fetch data booking hari ini
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchBookings();
     });
@@ -41,7 +40,7 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
 
     // Format tanggal jadi YYYY-MM-DD buat filter API
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final String url = 'http://127.0.0.1:8000/booking_arena/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
+    final String url = 'http://127.0.0.1:8000/booking/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
 
     try {
       final response = await request.get(url);
@@ -68,22 +67,21 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
     final response = await request.postJson(
-      "http://127.0.0.1:8000/booking_arena/api/bookings/",
+      "http://127.0.0.1:8000/booking/api/booking/create/",
       jsonEncode({
-        "arena": widget.arena.id,
+        "arena_id": widget.arena.id,
         "date": dateStr,
         "start_hour": hour,
         "activity": activity == BookingActivity.iceSkating ? "ice_skating" 
                   : activity == BookingActivity.iceHockey ? "ice_hockey" 
-                  : "curling", // Mapping manual simple
-        // 'user' & 'status' diurus otomatis di backend
+                  : "curling",
       }),
     );
 
     if (response['id'] != null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking Berhasil!")));
-      Navigator.pop(context); // Tutup modal
-      _fetchBookings(); // Refresh slot biar jadi merah
+      Navigator.pop(context); 
+      _fetchBookings(); 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: ${response['detail'] ?? 'Unknown error'}")));
     }

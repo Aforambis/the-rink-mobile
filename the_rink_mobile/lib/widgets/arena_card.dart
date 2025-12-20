@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/booking_arena.dart'; // Sesuaikan path model lu
-import '../theme/app_theme.dart'; // Sesuaikan path theme lu
+import '../models/booking_arena.dart';
+import '../theme/app_theme.dart'; 
 
 class ArenaCard extends StatelessWidget {
   final Arena arena;
