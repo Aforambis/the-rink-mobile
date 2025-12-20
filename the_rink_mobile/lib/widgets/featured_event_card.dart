@@ -23,28 +23,39 @@ class FeaturedEventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
           children: [
+            // Image Section
             Expanded(
               flex: 4,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.frostPrimary, AppColors.auroraViolet],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
+              child: ClipRRect( // Clip the image to the rounded corners
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
-                child: Center(
-                  child: Text(
-                    event.imageIcon,
-                    style: const TextStyle(fontSize: 44),
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.frostPrimary, AppColors.auroraViolet],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  // UPDATED: Use Image.network with the new imageUrl field
+                  child: Image.network(
+                    event.imageUrl, 
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback if image fails to load
+                      return const Center(
+                        child: Icon(Icons.event_available, size: 40, color: Colors.white70),
+                      );
+                    },
                   ),
                 ),
               ),
             ),
+            
+            // Info Section
             Expanded(
               flex: 5,
               child: Padding(
@@ -58,7 +69,7 @@ class FeaturedEventCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          event.title,
+                          event.name, // FIXED: Changed from event.title to event.name
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -73,6 +84,17 @@ class FeaturedEventCard extends StatelessWidget {
                             fontSize: 12,
                             color: AppColors.mutedText,
                           ),
+                        ),
+                         const SizedBox(height: 2),
+                         // Added location for better context
+                         Text(
+                          event.location,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.frostPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
