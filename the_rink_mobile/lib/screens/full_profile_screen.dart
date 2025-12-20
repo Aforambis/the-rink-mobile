@@ -98,7 +98,7 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'http://127.0.0.1:8000/rental/gear/json/',
+        'http://localhost:8000/rental/gear/json/',
       );
       print('Products API Response: $response'); // Debug logging
       if (response != null && mounted) {

@@ -10,12 +10,10 @@ import '../theme/app_theme.dart';
 import 'arena_detail_screen.dart'; // Pastiin import screen detail lu bener
 
 class ArenaListScreen extends StatefulWidget {
-  final VoidCallback onActionRequired; // Callback buat modal login (kyk community screen)
+  final VoidCallback
+  onActionRequired; // Callback buat modal login (kyk community screen)
 
-  const ArenaListScreen({
-    super.key,
-    required this.onActionRequired,
-  });
+  const ArenaListScreen({super.key, required this.onActionRequired});
 
   @override
   State<ArenaListScreen> createState() => _ArenaListScreenState();
@@ -28,26 +26,28 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
     // - Android Emulator: 'http://10.0.2.2:8000/booking_arena/api/arenas/'
     // - Chrome/Browser: 'http://127.0.0.1:8000/booking_arena/api/arenas/'
     // - HP Fisik (Debugging USB): Pake IP Laptop (misal 192.168.1.x)
-    
-    final response = await request.get('http://127.0.0.1:8000/booking/api/arenas/');
-    
+
+    final response = await request.get(
+      'http://localhost:8000/booking/api/arenas/',
+    );
+
     if (response == null) {
       return [];
     }
 
     // Decoding data
-    var data = response; 
+    var data = response;
     if (response is String) {
       data = jsonDecode(response);
     }
-    
-    List<Arena> listArena = []; 
+
+    List<Arena> listArena = [];
     for (var d in data) {
       if (d != null) {
         listArena.add(Arena.fromJson(d));
       }
     }
-    return listArena; 
+    return listArena;
   }
 
   @override
@@ -62,9 +62,9 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
           decoration: const BoxDecoration(gradient: AppColors.auroraGradient),
         ),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -72,7 +72,7 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
             onPressed: () {
               setState(() {}); // Refresh data manual
             },
-          )
+          ),
         ],
       ),
       body: Container(
@@ -83,9 +83,11 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
           builder: (context, AsyncSnapshot<List<Arena>> snapshot) {
             // 1. Kalo lagi loading
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: Colors.white));
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              );
             }
-            
+
             // 2. Kalo error
             if (snapshot.hasError) {
               return Center(
@@ -104,7 +106,10 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
 
             // 4. Kalo sukses -> Tampilin List
             return ListView.builder(
-              padding: const EdgeInsets.only(top: kToolbarHeight + 40, bottom: 100),
+              padding: const EdgeInsets.only(
+                top: kToolbarHeight + 40,
+                bottom: 100,
+              ),
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 final arena = snapshot.data![index];
@@ -112,7 +117,7 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
                   arena: arena,
                   onTap: () {
                     if (!request.loggedIn) {
-                      widget.onActionRequired(); 
+                      widget.onActionRequired();
                     } else {
                       Navigator.push(
                         context,
@@ -130,8 +135,8 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-           // Contoh logic tombol
-           if (!request.loggedIn) widget.onActionRequired();
+          // Contoh logic tombol
+          if (!request.loggedIn) widget.onActionRequired();
         },
         backgroundColor: AppColors.frostPrimary,
         child: const Icon(Icons.map_outlined, color: Colors.white),
@@ -149,9 +154,9 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
           Text(
             'No Arenas Found',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(

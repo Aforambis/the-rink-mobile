@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart'; 
+import 'package:intl/intl.dart';
 
 import '../models/booking_arena.dart';
-import '../theme/app_theme.dart'; 
+import '../theme/app_theme.dart';
 
 class ArenaDetailScreen extends StatefulWidget {
   final Arena arena;
@@ -40,7 +40,8 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
 
     // Format tanggal jadi YYYY-MM-DD buat filter API
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final String url = 'http://127.0.0.1:8000/booking/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
+    final String url =
+        'http://localhost:8000/booking/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
 
     try {
       final response = await request.get(url);
@@ -67,23 +68,31 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
     final response = await request.postJson(
-      "http://127.0.0.1:8000/booking/api/booking/create/",
+      "http://localhost:8000/booking/api/booking/create/",
       jsonEncode({
         "arena_id": widget.arena.id,
         "date": dateStr,
         "start_hour": hour,
-        "activity": activity == BookingActivity.iceSkating ? "ice_skating" 
-                  : activity == BookingActivity.iceHockey ? "ice_hockey" 
-                  : "curling",
+        "activity": activity == BookingActivity.iceSkating
+            ? "ice_skating"
+            : activity == BookingActivity.iceHockey
+            ? "ice_hockey"
+            : "curling",
       }),
     );
 
     if (response['id'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking Berhasil!")));
-      Navigator.pop(context); 
-      _fetchBookings(); 
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Booking Berhasil!")));
+      Navigator.pop(context);
+      _fetchBookings();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: ${response['detail'] ?? 'Unknown error'}")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal: ${response['detail'] ?? 'Unknown error'}"),
+        ),
+      );
     }
   }
 
@@ -104,15 +113,19 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
               height: 200,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_,__,___) => Container(height: 200, color: Colors.grey),
+              errorBuilder: (_, __, ___) =>
+                  Container(height: 200, color: Colors.grey),
             ),
-          
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.arena.location, style: const TextStyle(color: Colors.grey)),
+                Text(
+                  widget.arena.location,
+                  style: const TextStyle(color: Colors.grey),
+                ),
                 const SizedBox(height: 8),
                 Text(widget.arena.description),
                 const Divider(height: 32),
@@ -123,23 +136,31 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
                   children: [
                     Text(
                       "Jadwal: ${DateFormat('EEEE, d MMM y').format(_selectedDate)}",
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.calendar_today, color: AppColors.frostPrimary),
+                      icon: const Icon(
+                        Icons.calendar_today,
+                        color: AppColors.frostPrimary,
+                      ),
                       onPressed: () async {
                         final picked = await showDatePicker(
                           context: context,
                           initialDate: _selectedDate,
                           firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 30)),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 30),
+                          ),
                         );
                         if (picked != null) {
                           setState(() => _selectedDate = picked);
                           _fetchBookings(); // Fetch ulang pas ganti tanggal
                         }
                       },
-                    )
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -165,7 +186,9 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     // Cek apakah ada booking di jam ini
     Booking? currentBooking;
     try {
-      currentBooking = _existingBookings.firstWhere((b) => b.startHour == hour && b.status != BookingStatus.cancelled);
+      currentBooking = _existingBookings.firstWhere(
+        (b) => b.startHour == hour && b.status != BookingStatus.cancelled,
+      );
     } catch (e) {
       currentBooking = null;
     }
@@ -183,7 +206,8 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     VoidCallback? onTap = () => _showActivityModal(hour);
 
     if (isBooked) {
-      statusText = "Booked"; // Nanti bisa ditambah "by ${currentBooking.user}" kalo API support
+      statusText =
+          "Booked"; // Nanti bisa ditambah "by ${currentBooking.user}" kalo API support
       btnColor = Colors.grey;
       onTap = null; // Gak bisa diklik
     }
@@ -224,7 +248,10 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Pilih Aktivitas", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "Pilih Aktivitas",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
               RadioListTile(
                 title: const Text("Ice Skating"),
@@ -248,11 +275,16 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.frostPrimary),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.frostPrimary,
+                  ),
                   onPressed: () => _submitBooking(hour, selected),
-                  child: const Text("Konfirmasi Booking", style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    "Konfirmasi Booking",
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         ),

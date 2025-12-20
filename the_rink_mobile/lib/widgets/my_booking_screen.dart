@@ -14,7 +14,9 @@ class MyBookingScreen extends StatefulWidget {
 
 class _MyBookingScreenState extends State<MyBookingScreen> {
   Future<List<Booking>> _fetchHistory(CookieRequest request) async {
-    final response = await request.get('http://127.0.0.1:8000/booking_arena/api/bookings/my_history/');
+    final response = await request.get(
+      'http://localhost:8000/booking_arena/api/bookings/my_history/',
+    );
     List<Booking> list = [];
     for (var d in response) {
       if (d != null) list.add(Booking.fromJson(d));
@@ -25,11 +27,18 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
   Future<void> _cancelBooking(String bookingId, CookieRequest request) async {
     // Panggil API Cancel
     try {
-      await request.post('http://127.0.0.1:8000/booking_arena/api/bookings/$bookingId/cancel/', {});
+      await request.post(
+        'http://localhost:8000/booking_arena/api/bookings/$bookingId/cancel/',
+        {},
+      );
       setState(() {}); // Refresh halaman
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking dibatalkan")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Booking dibatalkan")));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Gagal membatalkan")));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Gagal membatalkan")));
     }
   }
 
@@ -50,7 +59,9 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("Belum ada bookingan nih. Gas main!"));
+            return const Center(
+              child: Text("Belum ada bookingan nih. Gas main!"),
+            );
           }
 
           return ListView.builder(
@@ -69,10 +80,13 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
   Widget _buildBookingCard(Booking booking, CookieRequest request) {
     // Logic warna status
     Color statusColor = Colors.green;
-    String statusText = booking.status.name.capitalize(); // Pake extension yg ada di model
-    
+    String statusText = booking.status.name
+        .capitalize(); // Pake extension yg ada di model
+
     // Logic Completed: Kalo tanggal udah lewat dari hari ini
-    bool isPast = booking.date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+    bool isPast = booking.date.isBefore(
+      DateTime.now().subtract(const Duration(days: 1)),
+    );
 
     if (booking.status == BookingStatus.cancelled) {
       statusColor = Colors.red;
@@ -95,34 +109,47 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
               children: [
                 Text(
                   booking.date.toString().split(' ')[0], // YYYY-MM-DD
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     border: Border.all(color: statusColor),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(statusText, style: TextStyle(color: statusColor, fontSize: 12)),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(color: statusColor, fontSize: 12),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.watch_later_outlined, size: 16, color: Colors.grey),
+                const Icon(
+                  Icons.watch_later_outlined,
+                  size: 16,
+                  color: Colors.grey,
+                ),
                 const SizedBox(width: 4),
-                Text("${booking.startHour}:00 - ${booking.startHour+1}:00"),
+                Text("${booking.startHour}:00 - ${booking.startHour + 1}:00"),
               ],
             ),
-             const SizedBox(height: 4),
+            const SizedBox(height: 4),
             Row(
               children: [
                 const Icon(Icons.sports_hockey, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
                 // Tampilkan activity yang diformat
-                Text(booking.activity?.name ?? "-"), 
+                Text(booking.activity?.name ?? "-"),
               ],
             ),
 
@@ -133,11 +160,14 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => _cancelBooking(booking.id, request),
-                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                  ),
                   child: const Text("Batalkan Booking"),
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
