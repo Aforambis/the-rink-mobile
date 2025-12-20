@@ -25,7 +25,7 @@ class HomeEventsScreen extends StatefulWidget {
 
 class _HomeEventsScreenState extends State<HomeEventsScreen> {
   // Use 10.0.2.2 for Android Emulator, or your PWS URL
-  final String baseUrl = "http://localhost:8000";
+  final String baseUrl = "https://angga-tri41-therink.pbp.cs.ui.ac.id";
 
   Future<List<Event>> fetchEvents(CookieRequest request) async {
     final response = await request.get('$baseUrl/events/api/list/');

@@ -271,7 +271,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           isLoggedIn: context.read<CookieRequest>().loggedIn,
           onSignOut: () async {
             final request = context.read<CookieRequest>();
-            await request.logout("http://localhost:8000/auth_mob/logout/");
+            await request.logout(
+              "https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/logout/",
+            );
             setState(() {
               _selectedIndex = 0;
             });

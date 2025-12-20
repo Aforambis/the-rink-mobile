@@ -64,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       // Fetch unified user data
       final userDataResponse = request.get(
-        'http://localhost:8000/auth_mob/user/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/user/',
       );
 
       final userData = await userDataResponse;
@@ -113,26 +113,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final request = context.read<CookieRequest>();
     try {
       // Update user profile
-      final profileResponse = await request
-          .post('http://localhost:8000/auth_mob/profile/', {
-            'full_name': _fullNameController.text.trim(),
-            'phone_number': _phoneController.text.trim(),
-            'email': _emailController.text.trim(),
-            'date_of_birth': _dateOfBirthController.text.isNotEmpty
-                ? _dateOfBirthController.text
-                : null,
-            'address': _addressController.text.trim(),
-          });
+      final profileResponse = await request.post(
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/profile/',
+        {
+          'full_name': _fullNameController.text.trim(),
+          'phone_number': _phoneController.text.trim(),
+          'email': _emailController.text.trim(),
+          'date_of_birth': _dateOfBirthController.text.isNotEmpty
+              ? _dateOfBirthController.text
+              : null,
+          'address': _addressController.text.trim(),
+        },
+      );
 
       // Update seller profile if user is a seller
       if (_userType == 'seller') {
-        await request
-            .post('http://localhost:8000/auth_mob/seller-profile/update/', {
-              'business_name': _businessNameController.text.trim(),
-              'phone_number': _phoneController.text.trim(),
-              'email': _emailController.text.trim(),
-              'business_address': _businessAddressController.text.trim(),
-            });
+        await request.post(
+          'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/seller-profile/update/',
+          {
+            'business_name': _businessNameController.text.trim(),
+            'phone_number': _phoneController.text.trim(),
+            'email': _emailController.text.trim(),
+            'business_address': _businessAddressController.text.trim(),
+          },
+        );
       }
 
       if (profileResponse != null &&

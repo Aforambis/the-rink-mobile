@@ -68,7 +68,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'http://localhost:8000/auth_mob/seller-profile/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/seller-profile/',
       );
       if (response != null && mounted) {
         setState(() {
@@ -94,7 +94,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'http://localhost:8000/rental_gear/seller-gears/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental_gear/seller-gears/',
       );
       if (response != null && response['gears'] != null && mounted) {
         setState(() {
@@ -120,13 +120,15 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
     final request = context.read<CookieRequest>();
     try {
-      final response = await request
-          .post('http://localhost:8000/auth_mob/seller-profile/update/', {
-            'business_name': _businessNameController.text.trim(),
-            'phone_number': _phoneController.text.trim(),
-            'email': _emailController.text.trim(),
-            'business_address': _businessAddressController.text.trim(),
-          });
+      final response = await request.post(
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/seller-profile/update/',
+        {
+          'business_name': _businessNameController.text.trim(),
+          'phone_number': _phoneController.text.trim(),
+          'email': _emailController.text.trim(),
+          'business_address': _businessAddressController.text.trim(),
+        },
+      );
 
       if (response != null && response['status'] == true && mounted) {
         // Refresh seller data
@@ -162,15 +164,17 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
     final request = context.read<CookieRequest>();
     try {
-      final response = await request
-          .postJson('http://localhost:8000/rental_gear/create-gear/', {
-            'name': _productNameController.text.trim(),
-            'category': _selectedCategory,
-            'price_per_day': double.parse(_productPriceController.text),
-            'stock': int.parse(_productStockController.text),
-            'description': _productDescriptionController.text.trim(),
-            'image_url': _productImageUrlController.text.trim(),
-          });
+      final response = await request.postJson(
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental_gear/create-gear/',
+        {
+          'name': _productNameController.text.trim(),
+          'category': _selectedCategory,
+          'price_per_day': double.parse(_productPriceController.text),
+          'stock': int.parse(_productStockController.text),
+          'description': _productDescriptionController.text.trim(),
+          'image_url': _productImageUrlController.text.trim(),
+        },
+      );
 
       if (response != null && response['success'] == true && mounted) {
         // Refresh products

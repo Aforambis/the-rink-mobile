@@ -64,7 +64,7 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
     final request = context.read<CookieRequest>();
     try {
       final userDataResponse = request.get(
-        'http://localhost:8000/auth_mob/user/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/user/',
       );
 
       final userData = await userDataResponse;
@@ -98,7 +98,7 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'http://localhost:8000/rental/gear/json/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental/gear/json/',
       );
       print('Products API Response: $response'); // Debug logging
       if (response != null && mounted) {
@@ -145,25 +145,29 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
 
     final request = context.read<CookieRequest>();
     try {
-      final profileResponse = await request
-          .post('http://localhost:8000/auth_mob/profile/', {
-            'full_name': _fullNameController.text.trim(),
-            'phone_number': _phoneController.text.trim(),
-            'email': _emailController.text.trim(),
-            'date_of_birth': _dateOfBirthController.text.isNotEmpty
-                ? _dateOfBirthController.text
-                : null,
-            'address': _addressController.text.trim(),
-          });
+      final profileResponse = await request.post(
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/profile/',
+        {
+          'full_name': _fullNameController.text.trim(),
+          'phone_number': _phoneController.text.trim(),
+          'email': _emailController.text.trim(),
+          'date_of_birth': _dateOfBirthController.text.isNotEmpty
+              ? _dateOfBirthController.text
+              : null,
+          'address': _addressController.text.trim(),
+        },
+      );
 
       if (_userType == 'seller') {
-        await request
-            .post('http://localhost:8000/auth_mob/seller-profile/update/', {
-              'business_name': _businessNameController.text.trim(),
-              'phone_number': _phoneController.text.trim(),
-              'email': _emailController.text.trim(),
-              'business_address': _businessAddressController.text.trim(),
-            });
+        await request.post(
+          'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/seller-profile/update/',
+          {
+            'business_name': _businessNameController.text.trim(),
+            'phone_number': _phoneController.text.trim(),
+            'email': _emailController.text.trim(),
+            'business_address': _businessAddressController.text.trim(),
+          },
+        );
       }
 
       if (profileResponse != null &&
@@ -199,15 +203,17 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
 
     final request = context.read<CookieRequest>();
     try {
-      final response = await request
-          .postJson('http://localhost:8000/rental_gear/create-gear/', {
-            'name': _productNameController.text.trim(),
-            'category': _selectedCategory,
-            'price_per_day': double.parse(_productPriceController.text),
-            'stock': int.parse(_productStockController.text),
-            'description': _productDescriptionController.text.trim(),
-            'image_url': _productImageUrlController.text.trim(),
-          });
+      final response = await request.postJson(
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental_gear/create-gear/',
+        {
+          'name': _productNameController.text.trim(),
+          'category': _selectedCategory,
+          'price_per_day': double.parse(_productPriceController.text),
+          'stock': int.parse(_productStockController.text),
+          'description': _productDescriptionController.text.trim(),
+          'image_url': _productImageUrlController.text.trim(),
+        },
+      );
 
       if (response != null && response['success'] == true && mounted) {
         await _fetchProducts();

@@ -28,7 +28,7 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
     // - HP Fisik (Debugging USB): Pake IP Laptop (misal 192.168.1.x)
 
     final response = await request.get(
-      'http://localhost:8000/booking/api/arenas/',
+      'https://angga-tri41-therink.pbp.cs.ui.ac.id/booking/api/arenas/',
     );
 
     if (response == null) {

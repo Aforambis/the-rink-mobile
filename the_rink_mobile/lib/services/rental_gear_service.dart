@@ -9,8 +9,8 @@ import 'package:http/http.dart' as http;
 
 class RentalGearService {
   // Ganti dengan URL Django server Anda
-  static const String baseUrl = 'http://localhost:8000/rental_gear/api/flutter';
-
+  static const String baseUrl =
+      'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental_gear/api/flutter';
   // Untuk production, gunakan domain sebenarnya:
   // static const String baseUrl = 'https://your-domain.com/rental_gear/api/flutter';
 

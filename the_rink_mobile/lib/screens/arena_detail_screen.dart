@@ -41,7 +41,7 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     // Format tanggal jadi YYYY-MM-DD buat filter API
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final String url =
-        'http://localhost:8000/booking/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/booking/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
 
     try {
       final response = await request.get(url);
@@ -68,7 +68,7 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
     final response = await request.postJson(
-      "http://localhost:8000/booking/api/booking/create/",
+      "https://angga-tri41-therink.pbp.cs.ui.ac.id/booking/api/booking/create/",
       jsonEncode({
         "arena_id": widget.arena.id,
         "date": dateStr,

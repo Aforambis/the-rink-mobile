@@ -15,7 +15,7 @@ class MyBookingScreen extends StatefulWidget {
 class _MyBookingScreenState extends State<MyBookingScreen> {
   Future<List<Booking>> _fetchHistory(CookieRequest request) async {
     final response = await request.get(
-      'http://localhost:8000/booking_arena/api/bookings/my_history/',
+      'https://angga-tri41-therink.pbp.cs.ui.ac.id/booking_arena/api/bookings/my_history/',
     );
     List<Booking> list = [];
     for (var d in response) {
@@ -28,7 +28,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
     // Panggil API Cancel
     try {
       await request.post(
-        'http://localhost:8000/booking_arena/api/bookings/$bookingId/cancel/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/booking_arena/api/bookings/$bookingId/cancel/',
         {},
       );
       setState(() {}); // Refresh halaman
