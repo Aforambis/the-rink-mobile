@@ -4,6 +4,7 @@ import 'package:the_rink_mobile/main.dart';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const LoginApp());
@@ -102,13 +103,12 @@ class _LoginPageState extends State<LoginPage> {
                       // TODO: Change the URL and don't forget to add trailing slash (/) at the end of URL!
                       // To connect Android emulator with Django on localhost, use URL http://10.0.2.2/
                       // If you using chrome,  use URL http://localhost:8000
-                      final response = await request
-                          .login("http://localhost:8000/auth_mob/login/", {
+                      final response = await request.login("http://127.0.0.1:8000/auth_mob/login/", {
                         'username': username,
                         'password': password,
                       });
 
-                      if (request.loggedIn) {
+                      if (response['status'] == true) {
                         String message = response['message'];
                         String uname = response['username'];
                         if (context.mounted) {
@@ -120,9 +120,7 @@ class _LoginPageState extends State<LoginPage> {
                           ScaffoldMessenger.of(context)
                             ..hideCurrentSnackBar()
                             ..showSnackBar(
-                              SnackBar(
-                                  content:
-                                      Text("$message Welcome, $uname.")),
+                              SnackBar(content: Text("$message Welcome, $uname.")),
                             );
                         }
                       } else {
@@ -131,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Login Failed'),
-                              content: Text(response['message']),
+                              content: Text(response['message'] ?? "Unknown error"),
                               actions: [
                                 TextButton(
                                   child: const Text('OK'),
