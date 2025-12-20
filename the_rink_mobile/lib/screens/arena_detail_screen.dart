@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart'; 
 
 import '../models/booking_arena.dart';
-import '../theme/app_theme.dart'; 
+// import '../theme/app_theme.dart'; // Uncomment kalo file theme lu ada
 
 class ArenaDetailScreen extends StatefulWidget {
   final Arena arena;
@@ -18,56 +18,64 @@ class ArenaDetailScreen extends StatefulWidget {
 
 class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
   DateTime _selectedDate = DateTime.now();
-  List<Booking> _existingBookings = [];
+  
+  // Kita simpan slot yang terisi. Key: Jam, Value: Booking Data
+  Map<int, Booking> _bookedSlots = {};
   bool _isLoading = true;
 
-  // Jam operasional (Hardcode dulu atau ambil dari widget.arena.openingHoursText kalo mau diparsing)
   final int openHour = 10;
   final int closeHour = 22;
+
+  // GANTI URL DISINI SESUAI ENVIRONMENT
+  final String baseUrl = "http://127.0.0.1:8000"; 
 
   @override
   void initState() {
     super.initState();
+    // Fetch data setelah build pertama selesai
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchBookings();
+      _fetchSlots();
     });
   }
 
-  // --- 1. FUNGSI FETCH DATA BOOKING ---
-  Future<void> _fetchBookings() async {
+  Future<void> _fetchSlots() async {
     final request = context.read<CookieRequest>();
     setState(() => _isLoading = true);
 
-    // Format tanggal jadi YYYY-MM-DD buat filter API
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final String url = 'http://127.0.0.1:8000/booking/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
+    final String url = '$baseUrl/booking/api/bookings/?arena=${widget.arena.id}&date=$dateStr';
 
     try {
       final response = await request.get(url);
-      // Response udah otomatis decoded json sama CookieRequest
-      List<Booking> listData = [];
+      
+      Map<int, Booking> tempSlots = {};
+      
+      // Django return list of dicts
       for (var d in response) {
         if (d != null) {
-          listData.add(Booking.fromJson(d));
+          Booking b = Booking.fromSlotJson(d);
+          // Simpan booking berdasarkan jam mulai
+          tempSlots[b.startHour] = b;
         }
       }
+
       setState(() {
-        _existingBookings = listData;
+        _bookedSlots = tempSlots;
         _isLoading = false;
       });
     } catch (e) {
-      print("Error fetching bookings: $e");
+      print("Error fetching slots: $e");
       setState(() => _isLoading = false);
     }
   }
 
-  // --- 2. FUNGSI POST BOOKING ---
   Future<void> _submitBooking(int hour, BookingActivity activity) async {
     final request = context.read<CookieRequest>();
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
+    // Kirim request booking
     final response = await request.postJson(
-      "http://127.0.0.1:8000/booking/api/booking/create/",
+      "$baseUrl/booking/api/booking/create/",
       jsonEncode({
         "arena_id": widget.arena.id,
         "date": dateStr,
@@ -78,12 +86,19 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
       }),
     );
 
-    if (response['id'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking Berhasil!")));
-      Navigator.pop(context); 
-      _fetchBookings(); 
+    // Cek status dari JSON response Django
+    if (response['status'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Booking Berhasil!"),
+        backgroundColor: Colors.green,
+      ));
+      Navigator.pop(context); // Tutup Modal
+      _fetchSlots(); // Refresh slot biar tombolnya jadi merah/abu
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: ${response['detail'] ?? 'Unknown error'}")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(response['message'] ?? "Gagal booking"),
+        backgroundColor: Colors.red,
+      ));
     }
   }
 
@@ -92,8 +107,7 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.arena.name),
-        backgroundColor: AppColors.frostPrimary, // Sesuaikan warna
-        foregroundColor: Colors.white,
+        // backgroundColor: AppColors.frostPrimary, 
       ),
       body: ListView(
         children: [
@@ -104,7 +118,7 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
               height: 200,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_,__,___) => Container(height: 200, color: Colors.grey),
+              errorBuilder: (_,__,___) => Container(height: 200, color: Colors.grey[300]),
             ),
           
           Padding(
@@ -112,41 +126,61 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.arena.location, style: const TextStyle(color: Colors.grey)),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(child: Text(widget.arena.location, style: const TextStyle(color: Colors.grey))),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 Text(widget.arena.description),
                 const Divider(height: 32),
 
                 // --- DATE PICKER ---
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Jadwal: ${DateFormat('EEEE, d MMM y').format(_selectedDate)}",
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 30)),
+                    );
+                    if (picked != null) {
+                      setState(() => _selectedDate = picked);
+                      _fetchSlots(); // Fetch ulang pas ganti tanggal
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.blueAccent), // AppColors.frostPrimary
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.calendar_today, color: AppColors.frostPrimary),
-                      onPressed: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDate,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 30)),
-                        );
-                        if (picked != null) {
-                          setState(() => _selectedDate = picked);
-                          _fetchBookings(); // Fetch ulang pas ganti tanggal
-                        }
-                      },
-                    )
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Date: ${DateFormat('EEEE, d MMM y').format(_selectedDate)}",
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const Icon(Icons.calendar_today, color: Colors.blueAccent),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
+                const Text("Available Slots", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
 
                 // --- SLOT LIST ---
                 if (_isLoading)
-                  const Center(child: CircularProgressIndicator())
+                  const Center(child: Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(),
+                  ))
+                else if (_selectedDate.day == DateTime.now().day && DateTime.now().hour >= closeHour)
+                   const Center(child: Text("Arena sudah tutup hari ini."))
                 else
                   ...List.generate(closeHour - openHour, (index) {
                     final int hour = openHour + index;
@@ -161,35 +195,38 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
   }
 
   Widget _buildSlotCard(int hour) {
-    final request = context.watch<CookieRequest>();
-    // Cek apakah ada booking di jam ini
-    Booking? currentBooking;
-    try {
-      currentBooking = _existingBookings.firstWhere((b) => b.startHour == hour && b.status != BookingStatus.cancelled);
-    } catch (e) {
-      currentBooking = null;
-    }
+    // Cek apakah jam ini sudah lewat (untuk hari ini)
+    bool isTimePassed = _selectedDate.day == DateTime.now().day && 
+                        _selectedDate.month == DateTime.now().month &&
+                        _selectedDate.year == DateTime.now().year &&
+                        hour <= DateTime.now().hour;
 
-    // Logic Status
-    bool isBooked = currentBooking != null;
-    // PENTING: request.jsonData['username'] harus ada dari login, atau cek ID user
-    // Karena kita pakai API DRF, data user login biasanya gak kesimpen di 'jsonData' bawaan PBP auth secara default kecuali lu set pas login.
-    // WORKAROUND SIMPLE: Kita anggap kalo tombol cancel muncul, itu punya kita.
-    // Tapi karena logic "My Booking" butuh user ID, sementara kita skip dulu logic "My Booking" di detail page,
-    // kita fokus: Kalo Booked = tombol mati (abu-abu).
+    // Cek di map _bookedSlots
+    Booking? bookingInfo = _bookedSlots[hour];
+    bool isBooked = bookingInfo != null;
+    bool isMine = isBooked && bookingInfo.isMine;
 
     String statusText = "Available";
-    Color btnColor = AppColors.frostPrimary;
+    Color btnColor = Colors.blue; // AppColors.frostPrimary
     VoidCallback? onTap = () => _showActivityModal(hour);
 
-    if (isBooked) {
-      statusText = "Booked"; // Nanti bisa ditambah "by ${currentBooking.user}" kalo API support
+    if (isTimePassed) {
+       statusText = "Passed";
+       btnColor = Colors.grey;
+       onTap = null;
+    } else if (isMine) {
+      statusText = "Booked by You";
+      btnColor = Colors.green; // Indikator punya sendiri
+      onTap = null;
+    } else if (isBooked) {
+      statusText = "Booked"; // Punya orang lain
       btnColor = Colors.grey;
-      onTap = null; // Gak bisa diklik
+      onTap = null; 
     }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -197,12 +234,13 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
           children: [
             Text(
               "${hour.toString().padLeft(2, '0')}:00 - ${(hour + 1).toString().padLeft(2, '0')}:00",
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: btnColor,
                 foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
               ),
               onPressed: onTap,
               child: Text(statusText),
@@ -217,46 +255,56 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
     BookingActivity selected = BookingActivity.iceSkating;
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: const EdgeInsets.all(24),
-          height: 350,
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+             bottom: MediaQuery.of(context).viewInsets.bottom, top: 20, left: 20, right: 20
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Pilih Aktivitas", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              RadioListTile(
-                title: const Text("Ice Skating"),
-                value: BookingActivity.iceSkating,
-                groupValue: selected,
-                onChanged: (val) => setModalState(() => selected = val!),
-              ),
-              RadioListTile(
-                title: const Text("Ice Hockey"),
-                value: BookingActivity.iceHockey,
-                groupValue: selected,
-                onChanged: (val) => setModalState(() => selected = val!),
-              ),
-              RadioListTile(
-                title: const Text("Curling"),
-                value: BookingActivity.curling,
-                groupValue: selected,
-                onChanged: (val) => setModalState(() => selected = val!),
-              ),
-              const Spacer(),
+              Text("Book Slot: ${hour}:00", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text("Select Activity:", style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 8),
+              
+              _buildRadioOption("Ice Skating", BookingActivity.iceSkating, selected, (val) => setModalState(() => selected = val!)),
+              _buildRadioOption("Ice Hockey", BookingActivity.iceHockey, selected, (val) => setModalState(() => selected = val!)),
+              _buildRadioOption("Curling", BookingActivity.curling, selected, (val) => setModalState(() => selected = val!)),
+              
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.frostPrimary),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent, // AppColors.frostPrimary
+                    padding: const EdgeInsets.symmetric(vertical: 14)
+                  ),
                   onPressed: () => _submitBooking(hour, selected),
-                  child: const Text("Konfirmasi Booking", style: TextStyle(color: Colors.white)),
+                  child: const Text("Confirm Booking", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-              )
+              ),
+              const SizedBox(height: 30),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRadioOption(String title, BookingActivity value, BookingActivity group, Function(BookingActivity?) onChange) {
+    return RadioListTile<BookingActivity>(
+      title: Text(title),
+      value: value,
+      groupValue: group,
+      onChanged: onChange,
+      activeColor: Colors.blueAccent,
+      contentPadding: EdgeInsets.zero,
     );
   }
 }
