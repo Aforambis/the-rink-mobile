@@ -39,6 +39,7 @@ jobs:
 
       - name: Get packages
         run: flutter pub get
+        working-directory: ./the_rink_mobile
 
       - name: Build APK
         run: flutter build apk --split-per-abi
