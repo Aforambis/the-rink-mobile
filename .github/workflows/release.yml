@@ -58,6 +58,7 @@ jobs:
               -keypass "${{ secrets.KEY_PASSWORD }}" \
               "$apk" release
           done
+        working-directory: ./the_rink_mobile
 
       - name: Cleanup Keystore
         if: always()
@@ -80,3 +81,4 @@ jobs:
           name: "v${{ steps.version.outputs.version }} - ${{ steps.date.outputs.date }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.tag.outputs.tag }}
+        working-directory: ./the_rink_mobile
