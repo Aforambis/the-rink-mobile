@@ -73,6 +73,24 @@ Widget _buildGearPlaceholder(double iconSize) {
   );
 }
 
+/// Format number to Indonesian Rupiah format (converted from USD)
+String _formatRupiah(double usdAmount) {
+  // Convert USD to IDR (rate: 1 USD = 15,500 IDR)
+  double idrAmount = usdAmount * 15500;
+  String price = idrAmount.toStringAsFixed(0);
+  String result = "";
+  int count = 0;
+  for (int i = price.length - 1; i >= 0; i--) {
+    count++;
+    result = price[i] + result;
+    if (count == 3 && i > 0) {
+      result = ".$result";
+      count = 0;
+    }
+  }
+  return result;
+}
+
 class GearRentalScreen extends StatefulWidget {
   const GearRentalScreen({super.key});
 
@@ -910,7 +928,7 @@ class _GearCardState extends State<_GearCard> {
                                     .auroraGradient
                                     .createShader(bounds),
                                 child: Text(
-                                  '\$${widget.gear.pricePerDay.toStringAsFixed(2)}',
+                                  'Rp ${_formatRupiah(widget.gear.pricePerDay)}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
@@ -1207,7 +1225,7 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '\$${gear.pricePerDay.toStringAsFixed(2)}',
+                                      'Rp ${_formatRupiah(gear.pricePerDay)}',
                                       style: const TextStyle(
                                         fontSize: 32,
                                         fontWeight: FontWeight.bold,
@@ -1479,7 +1497,7 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                                       const SizedBox(width: 12),
                                       Text(
                                         gear.stock > 0
-                                            ? 'Add to Cart • \$${totalPrice.toStringAsFixed(2)}'
+                                            ? 'Add to Cart • Rp ${_formatRupiah(totalPrice)}'
                                             : 'Out of Stock',
                                         style: TextStyle(
                                           fontSize: 17,

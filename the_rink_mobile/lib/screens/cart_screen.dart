@@ -18,6 +18,24 @@ class CartItemPreview {
 // Global cart service instance
 final cartService = CartService();
 
+/// Format number to Indonesian Rupiah format (converted from USD)
+String _formatRupiah(double usdAmount) {
+  // Convert USD to IDR (rate: 1 USD = 15,500 IDR)
+  double idrAmount = usdAmount * 15500;
+  String price = idrAmount.toStringAsFixed(0);
+  String result = "";
+  int count = 0;
+  for (int i = price.length - 1; i >= 0; i--) {
+    count++;
+    result = price[i] + result;
+    if (count == 3 && i > 0) {
+      result = ".$result";
+      count = 0;
+    }
+  }
+  return result;
+}
+
 class CartScreen extends StatefulWidget {
   final List<CartItemPreview> items;
 
@@ -43,6 +61,59 @@ class _CartScreenState extends State<CartScreen> {
 
   void _onCartChanged() {
     setState(() {});
+  }
+
+  void _showPaymentModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CartPaymentModalContent(
+        totalAmount: totalPrice,
+        itemCount: cartService.itemCount,
+        onPaymentComplete: _processPayment,
+      ),
+    );
+  }
+
+  Future<void> _processPayment(String paymentMethod) async {
+    // Simulate payment processing
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Payment Successful!",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "Paid with $paymentMethod",
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.frostPrimary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    cartService.clearCart();
   }
 
   double get totalPrice => cartService.totalPrice;
@@ -165,7 +236,7 @@ class _CartScreenState extends State<CartScreen> {
                                 ],
                               ),
                               Text(
-                                '\$${totalPrice.toStringAsFixed(2)}',
+                                'Rp ${_formatRupiah(totalPrice)}',
                                 style: Theme.of(context).textTheme.titleLarge
                                     ?.copyWith(
                                       color: AppColors.frostPrimary,
@@ -195,30 +266,7 @@ class _CartScreenState extends State<CartScreen> {
                               ],
                             ),
                             child: ElevatedButton.icon(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.check_circle_rounded,
-                                          color: Colors.white,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'Checkout complete! Total: \$${totalPrice.toStringAsFixed(2)}',
-                                        ),
-                                      ],
-                                    ),
-                                    backgroundColor: AppColors.frostPrimary,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                                cartService.clearCart();
-                              },
+                              onPressed: () => _showPaymentModal(context),
                               icon: const Icon(Icons.payment_rounded),
                               label: const Text('Complete Checkout'),
                               style: ElevatedButton.styleFrom(
@@ -301,7 +349,7 @@ class _CartItemCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${item.gear.pricePerDay.toStringAsFixed(2)}/day',
+                      'Rp ${_formatRupiah(item.gear.pricePerDay)}/day',
                       style: TextStyle(
                         color: AppColors.mutedText,
                         fontSize: 13,
@@ -309,7 +357,7 @@ class _CartItemCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Subtotal: \$${item.subtotal.toStringAsFixed(2)}',
+                      'Subtotal: Rp ${_formatRupiah(item.subtotal)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: AppColors.frostPrimary,
                         fontWeight: FontWeight.bold,
@@ -512,6 +560,383 @@ class _EmptyCartState extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Payment Modal Content for Cart Checkout
+class _CartPaymentModalContent extends StatefulWidget {
+  final double totalAmount;
+  final int itemCount;
+  final Future<void> Function(String) onPaymentComplete;
+
+  const _CartPaymentModalContent({
+    required this.totalAmount,
+    required this.itemCount,
+    required this.onPaymentComplete,
+  });
+
+  @override
+  State<_CartPaymentModalContent> createState() =>
+      _CartPaymentModalContentState();
+}
+
+class _CartPaymentModalContentState extends State<_CartPaymentModalContent> {
+  String? selectedMethod;
+  bool isProcessing = false;
+
+  String formatCurrency(double usdAmount) {
+    // Convert USD to IDR (rate: 1 USD = 15,500 IDR)
+    double idrAmount = usdAmount * 15500;
+    String price = idrAmount.toStringAsFixed(0);
+    String result = "";
+    int count = 0;
+    for (int i = price.length - 1; i >= 0; i--) {
+      count++;
+      result = price[i] + result;
+      if (count == 3 && i > 0) {
+        result = ".$result";
+        count = 0;
+      }
+    }
+    return 'Rp $result';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final platformFee = widget.totalAmount * 0.05;
+    final grandTotal = widget.totalAmount + platformFee;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.frostPrimary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.payment_rounded,
+                          color: AppColors.frostPrimary,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Complete Payment",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.glacialBlue,
+                              ),
+                            ),
+                            Text(
+                              "Choose your payment method",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.mutedText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    "Payment Method",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.mutedText,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _CartPaymentMethodTile(
+                    icon: Icons.qr_code_scanner_rounded,
+                    label: "QRIS",
+                    subtitle: "Scan & Pay instantly",
+                    isSelected: selectedMethod == "QRIS",
+                    onTap: () => setState(() => selectedMethod = "QRIS"),
+                  ),
+                  const SizedBox(height: 12),
+                  _CartPaymentMethodTile(
+                    icon: Icons.account_balance_rounded,
+                    label: "Virtual Account",
+                    subtitle: "BCA, BNI, Mandiri, BRI",
+                    isSelected: selectedMethod == "VA",
+                    onTap: () => setState(() => selectedMethod = "VA"),
+                  ),
+                  const SizedBox(height: 12),
+                  _CartPaymentMethodTile(
+                    icon: Icons.account_balance_wallet_rounded,
+                    label: "E-Wallet",
+                    subtitle: "GoPay, OVO, DANA, ShopeePay",
+                    isSelected: selectedMethod == "E-Wallet",
+                    onTap: () => setState(() => selectedMethod = "E-Wallet"),
+                  ),
+                  const SizedBox(height: 12),
+                  _CartPaymentMethodTile(
+                    icon: Icons.credit_card_rounded,
+                    label: "Credit/Debit Card",
+                    subtitle: "Visa, Mastercard, JCB",
+                    isSelected: selectedMethod == "Card",
+                    onTap: () => setState(() => selectedMethod = "Card"),
+                  ),
+                  const SizedBox(height: 32),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.frostPrimary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.frostPrimary.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Rental Fee (${widget.itemCount} items)",
+                              style: const TextStyle(
+                                color: AppColors.mutedText,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              formatCurrency(widget.totalAmount),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Platform Fee (5%)",
+                              style: TextStyle(
+                                color: AppColors.mutedText,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              formatCurrency(platformFee),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Total Payment",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.glacialBlue,
+                              ),
+                            ),
+                            Text(
+                              formatCurrency(grandTotal),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                                color: AppColors.frostPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: ElevatedButton(
+                onPressed: selectedMethod == null || isProcessing
+                    ? null
+                    : () async {
+                        setState(() => isProcessing = true);
+                        await widget.onPaymentComplete(selectedMethod!);
+                        if (mounted) {
+                          Navigator.pop(context);
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.frostPrimary,
+                  disabledBackgroundColor: Colors.grey[300],
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: isProcessing
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        "Pay ${formatCurrency(grandTotal)}",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CartPaymentMethodTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CartPaymentMethodTile({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.frostPrimary.withOpacity(0.1)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.frostPrimary
+                : Colors.grey.withOpacity(0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.frostPrimary.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? AppColors.frostPrimary : Colors.grey[700],
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: isSelected
+                          ? AppColors.frostPrimary
+                          : AppColors.glacialBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: AppColors.frostPrimary,
+                size: 24,
+              ),
           ],
         ),
       ),
