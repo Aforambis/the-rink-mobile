@@ -160,7 +160,7 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
 
       if (_userType == 'seller') {
         await request.post(
-          'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/seller-profile/update/',
+          'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth/seller-profile/update/',
           {
             'business_name': _businessNameController.text.trim(),
             'phone_number': _phoneController.text.trim(),

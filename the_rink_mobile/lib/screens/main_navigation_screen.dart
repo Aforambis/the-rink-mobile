@@ -166,16 +166,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AuthModalSheet(
-        onGoogleSignIn: () {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google sign-in not implemented yet.'),
-              backgroundColor: AppColors.frostPrimary,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
         onUsernamePasswordSignIn: () {
           Navigator.pop(context);
           Navigator.push(
