@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import '../theme/app_theme.dart';
+import '../../theme/app_theme.dart';
 import 'admin_user_management_screen.dart';
 import 'admin_arena_management_screen.dart';
 import 'admin_gear_management_screen.dart';

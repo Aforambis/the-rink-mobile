@@ -187,7 +187,6 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
   }
 
   Widget _buildSlotCard(int hour) {
-    final request = context.watch<CookieRequest>();
     // Cek apakah ada booking di jam ini
     Booking? currentBooking;
     try {
@@ -214,21 +213,23 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
       statusText = "Booked";
       btnColor = Colors.grey;
       onTap = null;
-    } else {
+    } 
+    else {
       // Require login for booking
-      if (request.loggedIn) {
-        onTap = () => _showActivityModal(hour);
-      } else {
-        statusText = "Login to Book";
-        btnColor = Colors.orange;
-        onTap =
-            widget.onActionRequired ??
-            () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please login to make a booking')),
-              );
-            };
-      }
+      // if (request.loggedIn) {
+      //   onTap = () => _showActivityModal(hour);
+      // } 
+      // else {
+      //   statusText = "Login to Book";
+      //   btnColor = Colors.orange;
+      //   onTap =
+      //       widget.onActionRequired ??
+      //       () {
+      //         ScaffoldMessenger.of(context).showSnackBar(
+      //           const SnackBar(content: Text('Please login to make a booking')),
+      //         );
+      //       };
+      // }
     }
 
     return Card(

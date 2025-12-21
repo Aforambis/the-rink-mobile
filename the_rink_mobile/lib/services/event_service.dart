@@ -2,11 +2,8 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/event.dart';
 
 class EventService {
-  // 1. GUNAKAN BASE URL DARI REMOTE (sudah diarahkan ke endpoint API)
-  final String baseUrl =
-      "https://angga-tri41-therink.pbp.cs.ui.ac.id/events/api";
-
-  // 2. GUNAKAN FETCH EVENTS DARI REMOTE (Koneksi Real API)
+  // Use 10.0.2.2 for Android Emulator, localhost for iOS simulator
+  final String baseUrl = "https://angga-tri41-therink.pbp.cs.ui.ac.id/events/api";
   Future<List<Event>> fetchEvents(CookieRequest request) async {
     final response = await request.get('$baseUrl/list/');
 

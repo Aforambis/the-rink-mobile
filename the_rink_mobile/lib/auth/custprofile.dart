@@ -5,7 +5,7 @@ import '../widgets/profile_menu_item.dart';
 import '../theme/app_theme.dart';
 import '../screens/my_events_screen.dart'; // Pastikan import ini ada
 import '../screens/full_profile_screen.dart';
-import '../screens/admin_dashboard_screen.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isLoggedIn;

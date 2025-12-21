@@ -3,11 +3,11 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../models/event.dart';
 import '../models/package.dart';
-import '../models/community_post.dart';
+
 import '../screens/home_events_screen.dart';
 import '../screens/arena_list_screen.dart';
 import '../screens/gear_rental_screen.dart';
-import '../screens/community_screen.dart';
+import '../screens/forum_screen.dart';
 import '../auth/custprofile.dart';
 import '../widgets/auth_modal_sheet.dart';
 import '../auth/login.dart';
@@ -149,45 +149,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ),
   ];
 
-  final List<CommunityPost> _communityPosts = [
-    CommunityPost(
-      id: '1',
-      username: 'ice_queen_23',
-      content:
-          'Just nailed my first axel jump! 🎉 The coaching here is incredible. Thank you Coach Maria!',
-      likes: 142,
-      timeAgo: '2h ago',
-      avatarColor: 'blue',
-    ),
-    CommunityPost(
-      id: '2',
-      username: 'hockey_dad_mike',
-      content:
-          'My son\'s team won their first game today at The Rink! Such an amazing facility. Highly recommend for youth hockey.',
-      likes: 89,
-      timeAgo: '5h ago',
-      avatarColor: 'red',
-    ),
-    CommunityPost(
-      id: '3',
-      username: 'figure_skater_sara',
-      content:
-          'The new LED floor lighting during evening sessions is absolutely stunning! Perfect for practice videos 📹',
-      likes: 203,
-      timeAgo: '1d ago',
-      avatarColor: 'purple',
-    ),
-    CommunityPost(
-      id: '4',
-      username: 'first_timer_joe',
-      content:
-          'Took my first skating lesson today. Fell about 20 times but had a blast! Staff was super patient and helpful.',
-      likes: 67,
-      timeAgo: '2d ago',
-      avatarColor: 'green',
-    ),
-  ];
-
   void _onNavTap(int index) {
     if (!context.read<CookieRequest>().loggedIn && (index == 1 || index == 2)) {
       _showAuthModal();
@@ -264,11 +225,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 2:
         return const GearRentalScreen();
       case 3:
-        return CommunityScreen(
-          posts: _communityPosts,
-          isLoggedIn: context.read<CookieRequest>().loggedIn,
-          onActionRequired: _showAuthModal,
-        );
+        return const ForumScreen();
       case 4:
         return ProfileScreen(
           isLoggedIn: context.read<CookieRequest>().loggedIn,

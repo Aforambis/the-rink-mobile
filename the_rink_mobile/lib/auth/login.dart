@@ -1,14 +1,8 @@
 import 'package:the_rink_mobile/screens/main_navigation_screen.dart';
 import 'package:the_rink_mobile/auth/register.dart';
-import 'package:the_rink_mobile/main.dart';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'dart:convert';
-
-void main() {
-  runApp(const LoginApp());
-}
 
 class LoginApp extends StatelessWidget {
   const LoginApp({super.key});
@@ -122,6 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                                   const MainNavigationScreen(),
                             ),
                           );
+
                           ScaffoldMessenger.of(context)
                             ..hideCurrentSnackBar()
                             ..showSnackBar(
