@@ -1,31 +1,34 @@
-// forum_leaderboard_post.dart
 import 'package:flutter/material.dart';
+import 'package:the_rink_mobile/widgets/forum/forum_replies_panel.dart';
 import '../../models/forum.dart';
-import '../../widgets/forum/forum_reply_card.dart';
+import 'dart:convert';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 class ForumLeaderboardPost extends StatelessWidget {
-  final List<Post> allPosts;
+  final List<Post> topPosts;
   final bool isLoggedIn;
   final Future<void> Function(Post post, bool isUpvote) onVote;
 
+  final Future<void> Function(Reply reply, bool isUpvote) onReplyVote;
+  final VoidCallback onRequireAuth;
+  final String baseUrl;
+  final VoidCallback? onAfterAction;
+
   const ForumLeaderboardPost({
     super.key,
-    required this.allPosts,
+    required this.topPosts,
     required this.isLoggedIn,
     required this.onVote,
+    required this.onReplyVote,
+    required this.onRequireAuth,
+    required this.baseUrl,
+    required this.onAfterAction,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (allPosts.isEmpty) return const SizedBox.shrink();
-
-    final sorted = [...allPosts];
-    sorted.sort((a, b) {
-      final scoreA = a.upvotesCount - a.downvotesCount + a.repliesCount;
-      final scoreB = b.upvotesCount - b.downvotesCount + b.repliesCount;
-      return scoreB.compareTo(scoreA);
-    });
-    final top5 = sorted.take(5).toList();
+    if (topPosts.isEmpty) return const SizedBox.shrink();
 
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 600),
@@ -70,14 +73,18 @@ class ForumLeaderboardPost extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              for (int i = 0; i < top5.length; i++) ...[
+              for (int i = 0; i < topPosts.length; i++) ...[
                 _LeaderboardPostTile(
                   rank: i + 1,
-                  post: top5[i],
+                  post: topPosts[i],
                   isLoggedIn: isLoggedIn,
                   onVote: onVote,
+                  onReplyVote: onReplyVote,
+                  onRequireAuth: onRequireAuth,
+                  baseUrl: baseUrl,
+                  onAfterAction: onAfterAction,
                 ),
-                if (i != top5.length - 1) const SizedBox(height: 12),
+                if (i != topPosts.length - 1) const SizedBox(height: 12),
               ],
             ],
           ),
@@ -93,11 +100,20 @@ class _LeaderboardPostTile extends StatefulWidget {
   final bool isLoggedIn;
   final Future<void> Function(Post post, bool isUpvote) onVote;
 
+  final Future<void> Function(Reply reply, bool isUpvote) onReplyVote;
+  final VoidCallback onRequireAuth;
+  final String baseUrl;
+  final VoidCallback? onAfterAction;
+
   const _LeaderboardPostTile({
     required this.rank,
     required this.post,
     required this.isLoggedIn,
     required this.onVote,
+    required this.onReplyVote,
+    required this.onRequireAuth,
+    required this.baseUrl,
+    required this.onAfterAction,
   });
 
   @override
@@ -143,6 +159,56 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
     });
   }
 
+  Future<void> votePost(bool isUpvote) async {
+    if (!widget.isLoggedIn) {
+      widget.onRequireAuth(); // <-- wajib ada ()
+      return;
+    }
+    if (isVoting) return;
+
+    setState(() => isVoting = true);
+
+    try {
+      final request = context.read<CookieRequest>();
+      final resp = await request.postJson(
+        '${widget.baseUrl}/forum/toggle-vote-flutter/',
+        jsonEncode({
+          'type': 'post',
+          'id': widget.post.id,
+          'is_upvote': isUpvote,
+        }),
+      ) as Map<String, dynamic>;
+
+      if (!mounted) return;
+
+      setState(() {
+        widget.post.upvotesCount =
+            (resp['upvotes'] ?? widget.post.upvotesCount) as int;
+        widget.post.downvotesCount =
+            (resp['downvotes'] ?? widget.post.downvotesCount) as int;
+      });
+
+      // OPTIONAL: kalau kamu masih mau parent rebuild tanpa refetch:
+      // widget.onAfterAction?.call();  <-- tapi pastikan ini "soft refresh", bukan reloadPost
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to vote: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => isVoting = false);
+    }
+  }
+
+
+  String _proxyUrl(String imageUrl) {
+    if (imageUrl.isEmpty) return '';
+    if (imageUrl.contains('/forum/proxy-image/')) return imageUrl;
+
+    final encoded = Uri.encodeComponent(imageUrl);
+    return 'http://localhost:8000/forum/proxy-image/?url=$encoded';
+  }
+
   @override
   Widget build(BuildContext context) {
     final post = widget.post;
@@ -183,8 +249,14 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
                 height: 52,
                 color: const Color(0xFFF3F4F6),
                 child: (post.thumbnailUrl.isNotEmpty)
-                    ? Image.network(post.thumbnailUrl, fit: BoxFit.cover)
-                    : const Icon(Icons.image, size: 26, color: Colors.grey),
+                  ? Image.network(
+                    _proxyUrl(post.thumbnailUrl),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.broken_image, size: 26, color: Colors.grey);
+                    },
+                  )
+                  : const Icon(Icons.image, size: 26, color: Colors.grey),
               ),
             ),
             const SizedBox(width: 12),
@@ -254,14 +326,14 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
                         ),
                       ),
                       const SizedBox(width: 12),
-                      _buildStat(
+                      buildStat(
                         icon: Icons.thumb_up,
                         color: const Color(0xFF16A34A),
                         value: post.upvotesCount,
                         isUpvote: true,
                       ),
                       const SizedBox(width: 8),
-                      _buildStat(
+                      buildStat(
                         icon: Icons.thumb_down,
                         color: const Color(0xFFEF4444),
                         value: post.downvotesCount,
@@ -287,7 +359,13 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
                 color: const Color(0xFFF1F5FE),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: _buildRepliesList(),
+              child: ForumRepliesPanel(
+                post: widget.post,
+                isLoggedIn: widget.isLoggedIn,
+                onReplyVote: widget.onReplyVote,
+                onRequireAuth: widget.onRequireAuth,
+                baseUrl: widget.baseUrl,
+              ),
             ),
           ),
         ),
@@ -295,7 +373,7 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
     );
   }
 
-  Widget _buildStat({
+  Widget buildStat({
     required IconData icon,
     required Color color,
     required int value,
@@ -304,31 +382,17 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: () async {
-        if (isVoting) return;
-
-        setState(() {
-          isVoting = true;
-        });
-
-        
-        try {
-          await widget.onVote(widget.post, isUpvote);
-        } 
-        finally {
-          if (mounted) {
-            setState(() {
-              isVoting = false;  
-            });
-          }
-        }
+        await votePost(isUpvote);
       },
-      child: Container(
+      child: 
+      Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
           color: color.withOpacity(0.08),
         ),
-        child: Row(
+        child: 
+        Row(
           children: [
             Icon(icon, size: 14, color: color),
             const SizedBox(width: 3),
@@ -343,31 +407,6 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildRepliesList() {
-    final replies = widget.post.replies;
-
-    if (replies.isEmpty) {
-      return const Text(
-        'No replies yet. Be the first to comment.',
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.grey,
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        for (int i = 0; i < replies.length; i++) ...[
-          ForumReplyCard(
-            reply: replies[i],
-            showDivider: i != replies.length - 1,
-          ),
-        ],
-      ],
     );
   }
 

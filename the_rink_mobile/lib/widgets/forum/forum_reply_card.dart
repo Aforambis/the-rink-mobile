@@ -1,5 +1,5 @@
-// lib/widgets/forum/forum_reply_card.dart
 import 'package:flutter/material.dart';
+import 'package:the_rink_mobile/theme/app_theme.dart';
 import '../../models/forum.dart';
 
 const Color _primaryBlue = Color(0xFF2563EB);
@@ -8,8 +8,6 @@ const Color _textDark = Color(0xFF111827);
 class ForumReplyCard extends StatelessWidget {
   final Reply reply;
   final bool showDivider;
-
-  // ⬇️ tambahan
   final VoidCallback? onLike;
   final VoidCallback? onDislike;
   final VoidCallback? onReplyTap;
@@ -23,12 +21,31 @@ class ForumReplyCard extends StatelessWidget {
     this.onReplyTap,
   });
 
+  String timeAgoId(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt.toLocal());
+
+    if (diff.inSeconds < 60) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit yang lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam yang lalu';
+    if (diff.inDays < 7) return '${diff.inDays} hari yang lalu';
+
+    final weeks = (diff.inDays / 7).floor();
+    if (weeks < 4) return '$weeks minggu yang lalu';
+
+    final months = (diff.inDays / 30).floor();
+    if (months < 12) return '$months bulan yang lalu';
+
+    final years = (diff.inDays / 365).floor();
+    return '$years tahun yang lalu';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // HEADER REPLY (avatar + nama + tanggal)
+        // Header
         Row(
           children: [
             Container(
@@ -60,11 +77,15 @@ class ForumReplyCard extends StatelessWidget {
                 ),
               ),
             ),
-            Text(
-              reply.createdAt.toString(), // bebas nanti diformat
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.grey.shade500,
+            StreamBuilder<int>(
+              stream: Stream.periodic(const Duration(minutes: 1), (i) => i),
+              builder: (_, __) => Text(
+                timeAgoId(reply.createdAt),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -84,9 +105,8 @@ class ForumReplyCard extends StatelessWidget {
         // ROW UPVOTE/DOWNVOTE + REPLY
         Row(
           children: [
-            // 👍 Like
             InkWell(
-              onTap: onLike, // ⬅️ panggil callback
+              onTap: onLike,
               borderRadius: BorderRadius.circular(999),
               child: Container(
                 padding:
@@ -144,14 +164,14 @@ class ForumReplyCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
 
-            // Reply (buat mention)
+            // Reply 
             GestureDetector(
               onTap: onReplyTap,
               child: const Text(
                 'Reply',
                 style: TextStyle(
                   fontSize: 12,
-                  color: _primaryBlue,
+                  color: AppColors.frostPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -6,8 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:the_rink_mobile/auth/login.dart';
 import 'package:the_rink_mobile/theme/app_theme.dart';
 import 'package:the_rink_mobile/widgets/auth_modal_sheet.dart';
+import 'package:the_rink_mobile/widgets/forum/forum_replies_panel.dart';
 import '../../models/forum.dart';
-import 'forum_reply_card.dart';
 
 class ForumPostCard extends StatefulWidget {
   final Post post;
@@ -32,13 +32,13 @@ class ForumPostCard extends StatefulWidget {
 }
 
 class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProviderStateMixin {
-  bool isVoting = false;
-  bool showReplies = false;
   late TextEditingController _replyController;
   late FocusNode _replyFocusNode;
-  bool _isSendingReply = false;
   late AnimationController repliesController;
   late Animation<double> repliesAnimation;
+
+  bool isVoting = false;
+  bool showReplies = false;
 
   static const Color _primaryBlue = Color(0xFF2563EB);
   static const Color _textDark = Color(0xFF111827);
@@ -77,69 +77,41 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
     });
   }
 
-  void _mentionUserFromReply(Reply reply) {
-    final mention = '@${reply.author} ';
-    setState(() {
-      _replyController.text = mention;
-      _replyController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _replyController.text.length),
-      );
-    });
-    _replyFocusNode.requestFocus();
-  }
-
-  Future<void> _sendReply() async {
-    final text = _replyController.text.trim();
-    if (text.isEmpty) return;
-
-    if (!widget.isLoggedIn) {
-      _showAuthModal();
-      return;
-    }
-    setState(() => _isSendingReply = true);
-    try {
-      final request = context.read<CookieRequest>();
-      final response = await request.postJson(
-        'http://localhost:8000/forum/add-reply-flutter/${widget.post.id}/',
-        jsonEncode({
-          'content': text,
-        }),
-      ) as Map<String, dynamic>;
-      final newReply = Reply.fromJson(response);
-      setState(() {
-        widget.post.replies.add(newReply);
-        widget.post.repliesCount = widget.post.replies.length;
-        _replyController.clear();
-      });
-    } 
-    catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send reply: $e')),
-      );
-    } 
-    finally {
-      if (mounted) setState(() => _isSendingReply = false);
-    }
-  }
-
-    Widget buildThumbnail() {
-    final String? url = widget.post.thumbnailUrl;
-
-    return ClipRRect(
+  Widget buildThumbnail() {
+    final String rawUrl = widget.post.thumbnailUrl;
+    final imgUrl = proxiedImageUrl(rawUrl);
+    return 
+    ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: 80,
         height: 80,
         color: const Color(0xFFF3F4F6),
-        child: url != null && url.isNotEmpty
-            ? Image.network(url, fit: BoxFit.cover)
-            : const Icon(
-                Icons.image,
-                size: 32,
-                color: Colors.grey,
+        child: Image.network(
+          imgUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(
+              child: Icon(Icons.broken_image, size: 28, color: Colors.grey),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
               ),
+            );
+          },
+        ),
       ),
     );
+  }
+
+  String proxiedImageUrl(String url) {
+    return 'http://localhost:8000/forum/proxy-image/?url=${Uri.encodeComponent(url)}';
   }
 
   // Tombol untuk Edit / Delete
@@ -216,7 +188,7 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
   
   bool get isLoggedIn {
     final request = context.read<CookieRequest>();
-    return request.jsonData['status'] == true;
+    return request.loggedIn;
   }
 
   Future<void> handleVote(Post post, bool isUpvote) async {
@@ -291,88 +263,6 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
       ),
     );
   }
-
-    Widget buildRepliesList() {
-    final replies = widget.post.replies;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (replies.isEmpty)
-          const Text(
-            'Belum ada reply. Jadilah yang pertama berkomentar',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey,
-            ),
-          )
-        else
-          for (int i = 0; i < replies.length; i++) ...[
-            ForumReplyCard(
-              reply: replies[i],
-              showDivider: i != replies.length - 1,
-              onLike: () => widget.onReplyVote(replies[i], true),
-              onDislike: () => widget.onReplyVote(replies[i], false),
-              onReplyTap: () => _mentionUserFromReply(replies[i]),
-            ),
-          ],
-
-        const SizedBox(height: 12),
-
-        // ====== INPUT BALASAN DI BAWAHNYA ======
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _replyController,
-                focusNode: _replyFocusNode,
-                decoration: InputDecoration(
-                  hintText: 'Create Your Reply',
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(999),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(999),
-                    borderSide: const BorderSide(color: AppColors.frostPrimary),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            SizedBox(
-              height: 36,
-              child: ElevatedButton(
-                onPressed: _isSendingReply ? null : _sendReply,
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  backgroundColor: AppColors.frostPrimary,
-                  foregroundColor: Colors.white,
-                ),
-                child: _isSendingReply
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text(
-                        'Send',
-                        style: TextStyle(fontSize: 13),
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
 
   String formatDate(DateTime dt) {
     final d = dt.toLocal();
@@ -551,7 +441,14 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
                           )
                         ],
                       ),
-                      child: buildRepliesList(),
+                      child: ForumRepliesPanel(
+                        post: widget.post,
+                        isLoggedIn: widget.isLoggedIn,
+                        onReplyVote: widget.onReplyVote,
+                        onRequireAuth: _showAuthModal,
+                        baseUrl: 'http://localhost:8000',
+                        onAfterReply: null,
+                      ),
                     ),
                   ],
                 ),

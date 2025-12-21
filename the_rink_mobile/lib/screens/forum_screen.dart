@@ -7,7 +7,7 @@ import '../theme/app_theme.dart';
 import '../models/forum.dart';
 import '../auth/login.dart';
 import '../widgets/forum/forum_post_card.dart';
-import '../services/forum/forum_post_search_bar.dart';
+import '../widgets/forum/forum_post_search_bar.dart';
 import '../widgets/auth_modal_sheet.dart'; 
 
 import '../services/forum/forum_create_post.dart'; 
@@ -28,13 +28,24 @@ class ForumScreen extends StatefulWidget {
 
 class _ForumScreenState extends State<ForumScreen> {
   final filterPost = PostFilter();
+  final TextEditingController _searchController = TextEditingController();
   final int pageSize = 10;
   int currentPage = 0;
   bool myPost = false;
   bool initialized = false;
-  final TextEditingController _searchController = TextEditingController();
   String searchTitle = '';
   String draftSearchTitle = '';
+
+  late Future<List<Post>> futureTopPosts;
+  int? userId;
+
+  Future<void> authUser() async {
+    final request = context.read<CookieRequest>();
+    final auth = await request.get('http://localhost:8000/forum/auth-person-forum/');
+    setState(() {
+      userId = auth['user_id'];
+    });
+  }
 
   @override
   void dispose() {
@@ -55,12 +66,23 @@ class _ForumScreenState extends State<ForumScreen> {
     return listPost;
   }
 
+  Future<List<Post>> fetchTopPosts(CookieRequest request) async {
+    final response = await request.get('http://localhost:8000/forum/get-top-posts-json-flutter/');
+    List<Post> listPost = [];
+    for (var data in response) {
+      if (data != null) listPost.add(Post.fromJson(data));
+    }
+    return listPost;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!initialized) {
       final request = context.read<CookieRequest>();
       futurePosts = fetchPosts(request);
+      futureTopPosts = fetchTopPosts(request);
+      authUser(); 
       initialized = true;
     }
   }
@@ -69,13 +91,14 @@ class _ForumScreenState extends State<ForumScreen> {
     final request = context.read<CookieRequest>();
     setState(() {
       futurePosts = fetchPosts(request);
+      futureTopPosts = fetchTopPosts(request);
       currentPage = 0;
     });
   }
 
   bool get _isLoggedInNow {
     final request = context.read<CookieRequest>();
-    return request.jsonData['status'] == true;
+    return request.loggedIn;
   }
 
   void openCreatePostSnackbar() {
@@ -127,35 +150,35 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
     void _showAuthModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AuthModalSheet(
-        onGoogleSignIn: () {
-          Navigator.pop(context);
-          // Mock Google sign-in - in real app, handle actual login
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google sign-in not implemented yet.'),
-              backgroundColor: AppColors.frostPrimary,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-        onUsernamePasswordSignIn: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginPage()),
-          );
-        },
-        onContinueAsGuest: () {
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => AuthModalSheet(
+          onGoogleSignIn: () {
+            Navigator.pop(context);
+            // Google sign-in
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Google sign-in not implemented yet.'),
+                backgroundColor: AppColors.frostPrimary,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+          onUsernamePasswordSignIn: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+          },
+          onContinueAsGuest: () {
+            Navigator.pop(context);
+          },
+        ),
+      );
+    }
 
 
   Future<void> _handleVote(Post post, bool isUpvote) async {
@@ -166,8 +189,6 @@ class _ForumScreenState extends State<ForumScreen> {
 
     try {
       final request = context.read<CookieRequest>();
-
-      // response sudah berupa Map<String, dynamic>
       final response = await request.postJson(
         'http://localhost:8000/forum/toggle-vote-flutter/',
         jsonEncode({
@@ -178,7 +199,6 @@ class _ForumScreenState extends State<ForumScreen> {
       ) as Map<String, dynamic>;
 
       setState(() {
-        // update hanya object post ini
         post.upvotesCount  = (response['upvotes']  ?? post.upvotesCount)  as int;
         post.downvotesCount = (response['downvotes'] ?? post.downvotesCount) as int;
       });
@@ -222,11 +242,7 @@ class _ForumScreenState extends State<ForumScreen> {
   // Forum Screen
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
-    final rawId = request.jsonData['user_id'] ?? request.jsonData['id'];
-
-    final int? currentUserId = rawId is int ? 
-    rawId : int.tryParse(rawId?.toString() ?? '');
+    final int? currentUserId = userId;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -330,69 +346,69 @@ class _ForumScreenState extends State<ForumScreen> {
                                   ),
                                 ],
                               ),
-                              // Tombol All / My post
                             child: 
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // All Posts
-ChoiceChip(
-  label: const Text('All Posts'),
-  selected: !myPost,
-  backgroundColor: Colors.white,                 // UNSELECTED
-  selectedColor: AppColors.frostPrimary,         // SELECTED (biru)
-  showCheckmark: false,
-  labelStyle: TextStyle(
-    fontWeight: FontWeight.w600,
-    color: !myPost ? Colors.white : AppColors.frostPrimary, // selected -> putih, unselected -> biru
-  ),
-  side: BorderSide(
-    color: AppColors.frostPrimary,
-    width: 1,
-  ),
-  onSelected: (_) {
-    setState(() {
-      myPost = false;
-      currentPage = 0;
-    });
-  },
-),
+                                // Tombol All Post
+                                ChoiceChip(
+                                  label: const Text('All Posts'),
+                                  selected: !myPost,
+                                  backgroundColor: Colors.white,                
+                                  selectedColor: AppColors.frostPrimary,      
+                                  showCheckmark: false,
+                                  labelStyle: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: !myPost ? Colors.white : AppColors.frostPrimary, 
+                                  ),
+                                  side: BorderSide(
+                                    color: AppColors.frostPrimary,
+                                    width: 1,
+                                  ),
+                                  onSelected: (_) {
+                                    setState(() {
+                                      myPost = false;
+                                      currentPage = 0;
+                                    });
+                                  },
+                                ),
 
-const SizedBox(width: 8),
+                                const SizedBox(width: 8),
 
-// My Posts
-ChoiceChip(
-  label: const Text('My Posts'),
-  selected: myPost,
-  backgroundColor: Colors.white,                 // UNSELECTED
-  selectedColor: AppColors.frostPrimary,         // SELECTED (biru)
-  showCheckmark: false,
-  labelStyle: TextStyle(
-    fontWeight: FontWeight.w600,
-    color: myPost ? Colors.white : AppColors.frostPrimary,  // selected -> putih, unselected -> biru
-  ),
-  side: BorderSide(
-    color: AppColors.frostPrimary,
-    width: 1,
-  ),
-  onSelected: (_) {
-    if (!_isLoggedInNow || currentUserId == null) {
-      _showAuthModal();
-      return;
-    }
-    setState(() {
-      myPost = true;
-      currentPage = 0;
-    });
-  },
-),
-
+                                // Tombol My Post
+                                ChoiceChip(
+                                  label: const Text('My Posts'),
+                                  selected: myPost,
+                                  backgroundColor: Colors.white,            
+                                  selectedColor: AppColors.frostPrimary,       
+                                  showCheckmark: false,
+                                  labelStyle: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: myPost ? Colors.white : AppColors.frostPrimary, 
+                                  ),
+                                  side: BorderSide(
+                                    color: AppColors.frostPrimary,
+                                    width: 1,
+                                  ),
+                                  onSelected: (_) {
+                                    if (!_isLoggedInNow || currentUserId == null) {
+                                      _showAuthModal();
+                                      return;
+                                    }
+                                    setState(() {
+                                      myPost = true;
+                                      currentPage = 0;
+                                    });
+                                  },
+                                ),
                               ],
                             ),
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 8),
+
                       // Post Empty Analyze
                       if (pagePosts.isEmpty)
                         const Padding(
@@ -404,7 +420,7 @@ ChoiceChip(
                           ),
                         )
                       else
-                        // Build Post Card
+                        // Post Card
                         ListView.builder(
                           itemCount: pagePosts.length,
                           shrinkWrap: true,
@@ -420,7 +436,6 @@ ChoiceChip(
                                 ForumPostCard(
                                   post: post,
                                   isLoggedIn: _isLoggedInNow,
-                                  // Validasi Login untuk Edit & Delete Post
                                   canEdit: _isLoggedInNow && myPost && currentUserId == post.userId,
                                   onEdit: () async {
                                     final changed = await showEditPostDialog(context, post);
@@ -441,11 +456,35 @@ ChoiceChip(
                     );
                     // Leaderboard Post
                     final Widget leaderboard = 
-                      ForumLeaderboardPost(
-                        allPosts: allPost, 
-                        isLoggedIn: _isLoggedInNow, 
-                        onVote: _handleVote,
+                      FutureBuilder<List<Post>>(
+                        future: futureTopPosts,
+                        builder: (context, topSnap) {
+                          if (topSnap.connectionState == ConnectionState.waiting) {
+                            return const SizedBox(
+                              height: 140,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          if (topSnap.hasError) {
+                            return Text('Leaderboard error: ${topSnap.error}');
+                          }
+
+                          final topFromApi = topSnap.data ?? <Post>[];
+                          final byId = {for (final p in allPost) p.id: p};
+                          final mergedTop = topFromApi.map((tp) => byId[tp.id] ?? tp).toList();
+
+                          return ForumLeaderboardPost(
+                            topPosts: mergedTop, 
+                            isLoggedIn: _isLoggedInNow,
+                            onVote: _handleVote,
+                            onReplyVote: _handleReplyVote,
+                            onRequireAuth: _showAuthModal,
+                            baseUrl: "http://localhost:8000",
+                            onAfterAction: reloadPost, 
+                          );
+                        },
                       );
+
                       if (!isWide) {
                         return 
                         Column(
@@ -465,7 +504,7 @@ ChoiceChip(
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                              // Kolom kiri: leaderboard
+                              // Kolom kiri: Leaderboard post
                               Expanded(
                                 child: 
                                 Align(
@@ -474,7 +513,7 @@ ChoiceChip(
                                 ),
                               ),
                               const SizedBox(width: 24), 
-                              // Kolom kanan: main list
+                              // Kolom kanan: Post list
                               Expanded(
                                 child: 
                                 Align(
@@ -641,7 +680,6 @@ class _ForumHeader extends StatelessWidget {
     );
   }
 }
-
 
 class _PaginationBar extends StatelessWidget {
   final int currentPage;

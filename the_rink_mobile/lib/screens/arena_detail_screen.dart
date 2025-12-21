@@ -161,7 +161,6 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
   }
 
   Widget _buildSlotCard(int hour) {
-    final request = context.watch<CookieRequest>();
     // Cek apakah ada booking di jam ini
     Booking? currentBooking;
     try {

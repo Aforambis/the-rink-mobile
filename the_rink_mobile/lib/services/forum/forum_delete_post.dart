@@ -19,12 +19,13 @@ Future<bool> showDeletePostDialog(BuildContext context, Post post) async {
               borderRadius: BorderRadius.circular(16),
             ),
 
-            // Header
-            title: const Text('Delete Post'),
-            content: const Text(
-              'Are you sure you want to delete this post? This action cannot be undone.',
-            ),
+          // Header
+          title: const Text('Delete Post'),
+          content: const Text(
+            'Are you sure you want to delete this post? This action cannot be undone.',
+          ),
           actions: [
+
             // Cancel Button
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
@@ -59,16 +60,18 @@ Future<bool> showDeletePostDialog(BuildContext context, Post post) async {
         const SnackBar(content: Text('Post deleted')),
       );
       return true;
-    } else {
+    } 
+    else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response['message'] ?? 'Failed to delete post'),
       ));
       return false;
     }
-  } catch (e) {
+  } 
+  catch (error) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
+      SnackBar(content: Text('Error: $error')),
     );
     return false;
   }
