@@ -24,7 +24,7 @@ jobs:
 
       - name: Get version from pubspec.yaml
         id: version
-        run: echo "::set-output name=version::$(grep "version:" pubspec.yaml | cut -c10-)"
+        run: echo "::set-output name=version::$(grep "version:" ./the_rink_mobile/pubspec.yaml | cut -c10-)"
 
       - name: Setup Java
         uses: actions/setup-java@v3
