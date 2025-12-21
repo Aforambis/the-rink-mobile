@@ -695,7 +695,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person_outline,
                 size: 60,
                 color: Colors.grey[400],
