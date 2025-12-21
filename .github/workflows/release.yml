@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  releases:
+    name: Build and Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Get version from pubspec.yaml
+        id: version
+        run: |
+          ver=$(grep '^version:' the_rink_mobile/pubspec.yaml | awk '{print $2}')
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get packages
+        working-directory: the_rink_mobile
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: the_rink_mobile
+        run: flutter build apk --split-per-abi
+
+      - name: Get current date
+        id: date
+        run: |
+          dt=$(TZ='Asia/Jakarta' date +'%A %d-%m-%Y %T WIB')
+          echo "date=$dt" >> "$GITHUB_OUTPUT"
+
+      - name: Generate unique tag
+        id: tag
+        run: |
+          tag="v${{ steps.version.outputs.version }}-$(date +'%Y%m%d%H%M%S')"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Release APK
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: false
+          artifacts: "the_rink_mobile/build/app/outputs/flutter-apk/*.apk"
+          body: "Published at ${{ steps.date.outputs.date }}"
+          name: "v${{ steps.version.outputs.version }} - ${{ steps.date.outputs.date }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.tag.outputs.tag }}
