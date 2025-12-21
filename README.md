@@ -81,3 +81,4 @@ Setelah user terautentikasi, tiap modul berjalan dengan pola integrasi yang seru
 
 Link Figma: https://www.figma.com/design/YBczn72Ok2p8p6iRfV51Re/The-RInk?node-id=0-1&t=FCiY8sKuNed8Obd9-1
 
+Link Flutter: https://app.bitrise.io/app/c8dfaa2d-434c-4b08-9cd8-6bd19aa0e207/installable-artifacts/23b8acb3c55f037d/public-install-page/5d372876d58f0f6aa727c43bb30be5b0
