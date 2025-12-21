@@ -273,41 +273,18 @@ class _CartItemCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: item.gear.imageUrl.isNotEmpty
-                    ? Image.network(
-                        item.gear.imageUrl,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            decoration: const BoxDecoration(
-                              gradient: AppColors.auroraGradient,
-                            ),
-                            child: const Icon(
-                              Icons.sports_hockey_rounded,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        width: 80,
-                        height: 80,
-                        decoration: const BoxDecoration(
-                          gradient: AppColors.auroraGradient,
-                        ),
-                        child: const Icon(
-                          Icons.sports_hockey_rounded,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                      ),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: AppColors.auroraGradient,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.sports_hockey_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(

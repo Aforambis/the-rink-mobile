@@ -26,11 +26,13 @@ class RentalGearService {
           .timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        return data;
       } else {
         throw Exception('Failed to load gears: ${response.statusCode}');
       }
     } catch (e) {
+      print('⚠️ Django API failed, using demo data. Error: $e');
       // Fallback demo data so the UI keeps working
       return [
         {

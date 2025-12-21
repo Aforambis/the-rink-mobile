@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/rental_gear_models.dart';
 import '../services/rental_gear_service.dart';
 import '../services/cart_service.dart';
@@ -8,6 +9,69 @@ import 'cart_screen.dart';
 
 // Global cart service instance
 final cartService = CartService();
+
+/// Build image widget that supports both SVG and regular images
+Widget buildGearImage(
+  String imageUrl, {
+  BoxFit fit = BoxFit.cover,
+  double iconSize = 32,
+}) {
+  if (imageUrl.isEmpty) {
+    return _buildGearPlaceholder(iconSize);
+  }
+
+  // Check if URL is SVG
+  if (imageUrl.toLowerCase().endsWith('.svg')) {
+    return SvgPicture.network(
+      imageUrl,
+      fit: fit,
+      placeholderBuilder: (context) => Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AppColors.frostPrimary,
+        ),
+      ),
+    );
+  }
+
+  // Regular image
+  return Image.network(
+    imageUrl,
+    fit: fit,
+    errorBuilder: (context, error, stackTrace) =>
+        _buildGearPlaceholder(iconSize),
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) return child;
+      return Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: AppColors.frostPrimary,
+          value: loadingProgress.expectedTotalBytes != null
+              ? loadingProgress.cumulativeBytesLoaded /
+                    loadingProgress.expectedTotalBytes!
+              : null,
+        ),
+      );
+    },
+  );
+}
+
+Widget _buildGearPlaceholder(double iconSize) {
+  return Center(
+    child: Container(
+      padding: EdgeInsets.all(iconSize / 2),
+      decoration: const BoxDecoration(
+        gradient: AppColors.auroraGradient,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        Icons.sports_hockey_rounded,
+        size: iconSize,
+        color: Colors.white,
+      ),
+    ),
+  );
+}
 
 class GearRentalScreen extends StatefulWidget {
   const GearRentalScreen({super.key});
@@ -28,30 +92,33 @@ class _GearRentalScreenState extends State<GearRentalScreen>
   String _searchQuery = '';
   late AnimationController _animationController;
 
-  // Updated categories to match backend data
+  // Updated categories to match backend data from Django scraping
   final List<String> _categories = [
     'All',
+    'Apparel',
     'Ice Skating',
     'Protective Gear',
-    'Hockey',
+    'Accessories',
     'Other',
   ];
 
   // Category icons for visual appeal
   final Map<String, IconData> _categoryIcons = {
     'All': Icons.grid_view_rounded,
+    'Apparel': Icons.checkroom_rounded,
     'Ice Skating': Icons.ice_skating,
     'Protective Gear': Icons.shield_rounded,
-    'Hockey': Icons.sports_hockey_rounded,
+    'Accessories': Icons.backpack_rounded,
     'Other': Icons.more_horiz_rounded,
   };
 
-  // Mapping from display category to backend category
+  // Mapping from display category to backend category (MUST match Django database values)
   final Map<String, String> _categoryMapping = {
     'All': 'all',
+    'Apparel': 'apparel',
     'Ice Skating': 'ice_skating',
     'Protective Gear': 'protective_gear',
-    'Hockey': 'hockey',
+    'Accessories': 'accessories',
     'Other': 'other',
   };
 
@@ -700,41 +767,7 @@ class _GearCardState extends State<_GearCard> {
                               topLeft: Radius.circular(20),
                               topRight: Radius.circular(20),
                             ),
-                            child: widget.gear.imageUrl.isNotEmpty
-                                ? Image.network(
-                                    widget.gear.imageUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Center(
-                                        child: Container(
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: BoxDecoration(
-                                            gradient: AppColors.auroraGradient,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.sports_hockey_rounded,
-                                            size: 32,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: const BoxDecoration(
-                                        gradient: AppColors.auroraGradient,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.sports_hockey_rounded,
-                                        size: 32,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
+                            child: _buildGearPlaceholder(48),
                           ),
                           // Featured Badge
                           if (widget.gear.isFeatured)
@@ -999,7 +1032,7 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                     Stack(
                       children: [
                         Container(
-                          height: 280,
+                          height: 200,
                           width: double.infinity,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -1007,19 +1040,11 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                               end: Alignment.bottomCenter,
                               colors: [
                                 AppColors.frostPrimary.withOpacity(0.1),
-                                Colors.white,
+                                AppColors.auroraViolet.withOpacity(0.05),
                               ],
                             ),
                           ),
-                          child: gear.imageUrl.isNotEmpty
-                              ? Image.network(
-                                  gear.imageUrl,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return _buildPlaceholderIcon();
-                                  },
-                                )
-                              : _buildPlaceholderIcon(),
+                          child: _buildGearPlaceholder(80),
                         ),
                         // Gradient overlay at bottom
                         Positioned(
@@ -1293,9 +1318,9 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        gear.sellerUsername,
-                                        style: const TextStyle(
+                                      const Text(
+                                        'Admin The-Rink',
+                                        style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.glacialBlue,
@@ -1336,47 +1361,6 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                             ),
                           ),
                           const SizedBox(height: 24),
-                          // Description Section
-                          const Row(
-                            children: [
-                              Icon(
-                                Icons.description_rounded,
-                                size: 20,
-                                color: AppColors.frostPrimary,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Description',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.glacialBlue,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.frostedGlass,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.5),
-                              ),
-                            ),
-                            child: Text(
-                              gear.description.isNotEmpty
-                                  ? gear.description
-                                  : 'No description available for this item.',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                color: AppColors.mutedText,
-                                height: 1.6,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
                           // Add to Cart Button
                           Container(
                             decoration: BoxDecoration(
@@ -1446,13 +1430,27 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                                               label: 'View Cart',
                                               textColor: Colors.white,
                                               onPressed: () {
+                                                Navigator.pop(
+                                                  context,
+                                                ); // Close detail sheet first
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const CartScreen(
-                                                          items: [],
-                                                        ),
+                                                    builder: (context) => CartScreen(
+                                                      items: cartService.items
+                                                          .map(
+                                                            (item) =>
+                                                                CartItemPreview(
+                                                                  gear:
+                                                                      item.gear,
+                                                                  quantity: item
+                                                                      .quantity,
+                                                                  days:
+                                                                      item.days,
+                                                                ),
+                                                          )
+                                                          .toList(),
+                                                    ),
                                                   ),
                                                 );
                                               },
@@ -1508,23 +1506,6 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderIcon() {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        decoration: const BoxDecoration(
-          gradient: AppColors.auroraGradient,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.sports_hockey_rounded,
-          size: 64,
-          color: Colors.white,
         ),
       ),
     );
