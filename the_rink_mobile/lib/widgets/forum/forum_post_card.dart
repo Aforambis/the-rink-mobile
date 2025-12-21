@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:the_rink_mobile/auth/login.dart';
-import 'package:the_rink_mobile/theme/app_theme.dart';
 import 'package:the_rink_mobile/widgets/auth_modal_sheet.dart';
 import 'package:the_rink_mobile/widgets/forum/forum_replies_panel.dart';
 import '../../models/forum.dart';
