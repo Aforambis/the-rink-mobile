@@ -392,6 +392,14 @@ class _AdminEventManagementScreenState
                   );
                   Navigator.of(context).pop();
                   _fetchEvents();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        response?['message'] ?? 'Failed to update event',
+                      ),
+                    ),
+                  );
                 }
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
