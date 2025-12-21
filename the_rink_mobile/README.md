@@ -2,6 +2,12 @@
 
 **Project Status:** Planning Phase
 
+## 📱 Download APK
+
+[![Download APK](https://img.shields.io/badge/Download-APK-green?style=for-the-badge&logo=android)](https://app.bitrise.io/app/c8dfaa2d-434c-4b08-9cd8-6bd19aa0e207/installable-artifacts/23b8acb3c55f037d/public-install-page/5d372876d58f0f6aa727c43bb30be5b0)
+
+---
+
 Dokumen ini berisi detail perencanaan kerja individu dan kelompok untuk pengembangan aplikasi mobile hingga **21 Desember 2025**.
 
 ---
