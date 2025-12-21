@@ -116,16 +116,16 @@ class _ArenaListScreenState extends State<ArenaListScreen> {
                 return ArenaCard(
                   arena: arena,
                   onTap: () {
-                    if (!request.loggedIn) {
-                      widget.onActionRequired();
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ArenaDetailScreen(arena: arena),
+                    // Allow browsing arena details without login
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ArenaDetailScreen(
+                          arena: arena,
+                          onActionRequired: widget.onActionRequired,
                         ),
-                      );
-                    }
+                      ),
+                    );
                   },
                 );
               },

@@ -3,6 +3,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../widgets/profile_menu_item.dart';
 import '../screens/full_profile_screen.dart';
+import '../screens/admin_dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isLoggedIn;
@@ -23,6 +24,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _userData;
   String _userType = 'customer'; // Default to customer
+  bool _isSuperuser = false; // Default to false
   bool _isLoading = true;
 
   // Edit profile form controllers
@@ -73,6 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _userData = userData;
           _userType = userData['user_type'] ?? 'customer';
+          _isSuperuser = userData['is_superuser'] ?? false;
           _isLoading = false;
         });
 
@@ -452,138 +455,165 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final fullName = _getDisplayValue(_userData?['full_name']);
     final email = _getDisplayValue(_userData?['email']);
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 100), // Account for app bar
-          // Profile Image, Name, Email
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
             child: Column(
               children: [
-                // Profile Image
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                const SizedBox(height: 100), // Account for app bar
+                // Profile Image, Name, Email
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      // Profile Image
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Name
+                      Text(
+                        fullName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Email
+                      Text(
+                        email,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Icon(
-                    Icons.person,
+                ),
+
+                const SizedBox(height: 24),
+                // Menu Items
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    size: 40,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      ProfileMenuItem(
+                        icon: Icons.person,
+                        title: 'My Profile',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FullProfileScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ProfileMenuItem(
+                        icon: Icons.history,
+                        title: 'Booking History',
+                        onTap: () {},
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ProfileMenuItem(
+                        icon: Icons.payment,
+                        title: 'Payment Methods',
+                        onTap: () {},
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ProfileMenuItem(
+                        icon: Icons.notifications,
+                        title: 'Notifications',
+                        onTap: () {},
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ProfileMenuItem(
+                        icon: Icons.settings,
+                        title: 'Settings',
+                        onTap: () {},
+                      ),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
+                      ProfileMenuItem(
+                        icon: Icons.help_outline,
+                        title: 'Help & Support',
+                        onTap: () {},
+                      ),
+
+                      // Admin menu items (only shown for superusers)
+                      if (_isSuperuser) ...[
+                        const Divider(height: 1, indent: 16, endIndent: 16),
+                        ProfileMenuItem(
+                          icon: Icons.admin_panel_settings,
+                          title: 'Admin Dashboard',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const AdminDashboardScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Name
-                Text(
-                  fullName,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Email
-                Text(
-                  email,
-                  style: const TextStyle(fontSize: 16, color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-          // Menu Items
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                ProfileMenuItem(
-                  icon: Icons.person,
-                  title: 'My Profile',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const FullProfileScreen(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: widget.onSignOut,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        backgroundColor: Colors.white,
                       ),
-                    );
-                  },
+                      child: const Text('Sign Out'),
+                    ),
+                  ),
                 ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ProfileMenuItem(
-                  icon: Icons.history,
-                  title: 'Booking History',
-                  onTap: () {},
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ProfileMenuItem(
-                  icon: Icons.payment,
-                  title: 'Payment Methods',
-                  onTap: () {},
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ProfileMenuItem(
-                  icon: Icons.notifications,
-                  title: 'Notifications',
-                  onTap: () {},
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ProfileMenuItem(
-                  icon: Icons.settings,
-                  title: 'Settings',
-                  onTap: () {},
-                ),
-                const Divider(height: 1, indent: 16, endIndent: 16),
-                ProfileMenuItem(
-                  icon: Icons.help_outline,
-                  title: 'Help & Support',
-                  onTap: () {},
-                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: widget.onSignOut,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  backgroundColor: Colors.white,
-                ),
-                child: const Text('Sign Out'),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -27,7 +27,9 @@ class Arena {
       description: json['description'] as String,
       capacity: json['capacity'] as int,
       location: json['location'] as String,
-      imgUrl: json['img_url'] as String?, // Perhatiin key-nya snake_case sesuai Django
+      imgUrl:
+          json['img_url']
+              as String?, // Perhatiin key-nya snake_case sesuai Django
       openingHoursText: json['opening_hours_text'] as String?,
       googleMapsUrl: json['google_maps_url'] as String?,
     );
@@ -65,7 +67,15 @@ class ArenaOpeningHours {
 
   // Helper buat dapetin nama hari biar gak pusing angka doang
   String get dayName {
-    const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    const days = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
     if (day >= 0 && day < days.length) return days[day];
     return 'Unknown';
   }
@@ -74,7 +84,7 @@ class ArenaOpeningHours {
     return ArenaOpeningHours(
       id: json['id'] as int,
       // Asumsi serializer lu ngirim arena_id, bukan nested arena object
-      arenaId: json['arena'] as String, 
+      arenaId: json['arena'] as String,
       day: json['day'] as int,
       openTime: json['open_time'] as String?,
       closeTime: json['close_time'] as String?,
@@ -100,70 +110,42 @@ enum BookingActivity { iceSkating, iceHockey, curling, other }
 
 class Booking {
   final String id;
-  final String arenaId;
-  final int userId; 
+  final String arenaName;
   final DateTime date;
   final int startHour;
-  final DateTime bookedAt;
-  final BookingStatus status;
-  final BookingActivity? activity;
+  final String status;
+  final String activity;
 
   Booking({
     required this.id,
-    required this.arenaId,
-    required this.userId,
+    required this.arenaName,
     required this.date,
     required this.startHour,
-    required this.bookedAt,
     required this.status,
-    this.activity,
+    required this.activity,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
     return Booking(
       id: json['id'] as String,
-      arenaId: json['arena'] as String,
-      userId: json['user'] as int,
+      arenaName: json['arena_name'] as String,
       // Parsing string "YYYY-MM-DD" ke DateTime
-      date: DateTime.parse(json['date'] as String), 
+      date: DateTime.parse(json['date'] as String),
       startHour: json['start_hour'] as int,
-      bookedAt: DateTime.parse(json['booked_at'] as String),
-      // Konversi String ke Enum (Safety first!)
-      status: _mapStatus(json['status'] as String?),
-      activity: _mapActivity(json['activity'] as String?),
+      status: json['status'] as String,
+      activity: json['activity'] as String,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'arena': arenaId,
-      'user': userId,
+      'arena_name': arenaName,
       'date': date.toIso8601String().split('T').first, // Ambil tanggalnya aja
       'start_hour': startHour,
-      'booked_at': bookedAt.toIso8601String(),
-      'status': status.name.capitalize(), // Balikin ke format text Django (opsional)
-      'activity': activity?.name, // Snake case handling mungkin butuh logic tambahan
+      'status': status,
+      'activity': activity,
     };
-  }
-
-  // Helper methods buat mapping Enum
-  static BookingStatus _mapStatus(String? val) {
-    switch (val?.toLowerCase()) {
-      case 'booked': return BookingStatus.booked;
-      case 'cancelled': return BookingStatus.cancelled;
-      case 'completed': return BookingStatus.completed;
-      default: return BookingStatus.unknown;
-    }
-  }
-
-  static BookingActivity? _mapActivity(String? val) {
-    switch (val?.toLowerCase()) {
-      case 'ice_skating': return BookingActivity.iceSkating;
-      case 'ice_hockey': return BookingActivity.iceHockey;
-      case 'curling': return BookingActivity.curling;
-      default: return null;
-    }
   }
 }
 

@@ -9,8 +9,13 @@ import '../theme/app_theme.dart';
 
 class ArenaDetailScreen extends StatefulWidget {
   final Arena arena;
+  final VoidCallback? onActionRequired; // Callback for login requirement
 
-  const ArenaDetailScreen({super.key, required this.arena});
+  const ArenaDetailScreen({
+    super.key,
+    required this.arena,
+    this.onActionRequired,
+  });
 
   @override
   State<ArenaDetailScreen> createState() => _ArenaDetailScreenState();
@@ -203,13 +208,27 @@ class _ArenaDetailScreenState extends State<ArenaDetailScreen> {
 
     String statusText = "Available";
     Color btnColor = AppColors.frostPrimary;
-    VoidCallback? onTap = () => _showActivityModal(hour);
+    VoidCallback? onTap;
 
     if (isBooked) {
-      statusText =
-          "Booked"; // Nanti bisa ditambah "by ${currentBooking.user}" kalo API support
+      statusText = "Booked";
       btnColor = Colors.grey;
-      onTap = null; // Gak bisa diklik
+      onTap = null;
+    } else {
+      // Require login for booking
+      if (request.loggedIn) {
+        onTap = () => _showActivityModal(hour);
+      } else {
+        statusText = "Login to Book";
+        btnColor = Colors.orange;
+        onTap =
+            widget.onActionRequired ??
+            () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Please login to make a booking')),
+              );
+            };
+      }
     }
 
     return Card(

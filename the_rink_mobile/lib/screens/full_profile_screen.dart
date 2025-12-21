@@ -727,6 +727,7 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container(
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF667eea), Color(0xFF764ba2)],

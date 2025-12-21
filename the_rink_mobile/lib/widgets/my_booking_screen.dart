@@ -78,23 +78,22 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
   }
 
   Widget _buildBookingCard(Booking booking, CookieRequest request) {
-    // Logic warna status
-    Color statusColor = Colors.green;
-    String statusText = booking.status.name
-        .capitalize(); // Pake extension yg ada di model
-
-    // Logic Completed: Kalo tanggal udah lewat dari hari ini
-    bool isPast = booking.date.isBefore(
-      DateTime.now().subtract(const Duration(days: 1)),
+    final today = DateTime.now().toLocal();
+    final bookingDate = DateTime(
+      booking.date.year,
+      booking.date.month,
+      booking.date.day,
     );
+    final isPast = bookingDate.isBefore(today);
 
-    if (booking.status == BookingStatus.cancelled) {
+    String statusText = booking.status;
+    Color statusColor = AppColors.frostPrimary;
+
+    if (booking.status == 'Cancelled') {
       statusColor = Colors.red;
     } else if (isPast) {
       statusColor = Colors.grey;
-      statusText = "Completed";
-    } else {
-      statusColor = AppColors.frostPrimary;
+      if (booking.status == 'Booked') statusText = "Completed";
     }
 
     return Card(
@@ -146,15 +145,22 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
             const SizedBox(height: 4),
             Row(
               children: [
+                const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(booking.arenaName),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
                 const Icon(Icons.sports_hockey, size: 16, color: Colors.grey),
                 const SizedBox(width: 4),
-                // Tampilkan activity yang diformat
-                Text(booking.activity?.name ?? "-"),
+                Text(booking.activity),
               ],
             ),
 
             // Tombol Cancel cuma muncul kalo status Booked & belum lewat
-            if (booking.status == BookingStatus.booked && !isPast) ...[
+            if (booking.status == 'Booked' && !isPast) ...[
               const Divider(height: 24),
               SizedBox(
                 width: double.infinity,
