@@ -438,8 +438,8 @@ class _ForumScreenState extends State<ForumScreen> {
                                   isLoggedIn: _isLoggedInNow,
                                   canEdit: _isLoggedInNow && myPost && currentUserId == post.userId,
                                   onEdit: () async {
-                                    final changed = await showEditPostDialog(context, post);
-                                    if (changed) reloadPost();
+                                    final edited = await showEditPostDialog(context, post);
+                                    if (edited) reloadPost();
                                   },
                                   onDelete: () async {
                                     final deleted = await showDeletePostDialog(context, post);

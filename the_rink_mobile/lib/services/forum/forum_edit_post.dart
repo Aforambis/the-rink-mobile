@@ -5,14 +5,15 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:the_rink_mobile/models/forum.dart';
 import 'package:the_rink_mobile/theme/app_theme.dart';
 
-Future<bool> showEditPostDialog(BuildContext context, Post post) async {
+Future<bool> showEditPostDialog(BuildContext parentContext, Post post) async {
   final titleController = TextEditingController(text: post.title);
   final contentController = TextEditingController(text: post.content);
   final thumbController = TextEditingController(text: post.thumbnailUrl);
 
   try {
     final result = await showGeneralDialog<bool>(
-      context: context,
+      context: parentContext,
+      useRootNavigator: true, 
       barrierDismissible: true,
       barrierLabel: 'Edit Post',
       barrierColor: Colors.black54,
@@ -26,6 +27,7 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
               child: Material(
                 color: Colors.transparent,
                 child: _EditPostCard(
+                  parentContext: parentContext,
                   postId: post.id,
                   titleController: titleController,
                   contentController: contentController,
@@ -48,9 +50,14 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
         );
       },
     );
-
+    if (result == true) {
+      ScaffoldMessenger.of(parentContext).showSnackBar(
+        const SnackBar(content: Text('Post updated successfully')),
+      );
+    }
     return result ?? false;
-  } finally {
+  } 
+  finally {
     titleController.dispose();
     contentController.dispose();
     thumbController.dispose();
@@ -58,12 +65,14 @@ Future<bool> showEditPostDialog(BuildContext context, Post post) async {
 }
 
 class _EditPostCard extends StatefulWidget {
+  final BuildContext parentContext;
   final int postId;
   final TextEditingController titleController;
   final TextEditingController contentController;
   final TextEditingController thumbController;
 
   const _EditPostCard({
+    required this.parentContext,
     required this.postId,
     required this.titleController,
     required this.contentController,
@@ -83,29 +92,24 @@ class _EditPostCardState extends State<_EditPostCard> {
     final thumbnail = widget.thumbController.text.trim();
 
     if (title.isEmpty || content.isEmpty || thumbnail.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
         const SnackBar(content: Text('The title, thumbnail, and content cannot be empty!')),
       );
       return;
     }
 
     if (content.length > 300) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'The maximum content consists of only 300 characters (currently ${content.length}).',
-          ),
-        ),
+      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+        SnackBar(content: Text('Max 300 chars (currently ${content.length}).')),
       );
       return;
     }
 
     if (hasSaved) return;
-
     setState(() => hasSaved = true);
 
     try {
-      final request = context.read<CookieRequest>();
+      final request = context.read<CookieRequest>(); 
       final response = await request.postJson(
         'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/edit-post-flutter/${widget.postId}/',
         jsonEncode({
@@ -116,17 +120,18 @@ class _EditPostCardState extends State<_EditPostCard> {
       );
 
       if (response is Map && response['status'] == 'success') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post updated successfully')),
-        );
-        if (mounted) Navigator.of(context).pop(true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message']?.toString() ?? 'Failed to update post')),
-        );
+        if (!mounted) return;
+
+        // ✅ pop dialog yang bener
+        Navigator.of(context, rootNavigator: true).pop(true);
+        return;
       }
+
+      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+        SnackBar(content: Text(response['message']?.toString() ?? 'Failed to update post')),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(widget.parentContext).showSnackBar(
         SnackBar(content: Text('Failed to update post: $e')),
       );
     } finally {
@@ -143,10 +148,7 @@ class _EditPostCardState extends State<_EditPostCard> {
           margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [
-                Color(0xFFE0F2FF),
-                Color(0xFFBFDFFF),
-              ],
+              colors: [Color(0xFFE0F2FF), Color(0xFFBFDFFF)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -163,32 +165,23 @@ class _EditPostCardState extends State<_EditPostCard> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header 
                 const Text(
                   'Edit your post',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2563EB),
-                  ),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF2563EB)),
                 ),
                 const SizedBox(height: 10),
 
-                // Title
                 TextField(
                   controller: widget.titleController,
                   decoration: const InputDecoration(
                     hintText: 'Enter post title...',
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
                   ),
                 ),
                 const SizedBox(height: 10),
 
-                // Content
                 TextField(
                   controller: widget.contentController,
                   maxLines: 4,
@@ -196,14 +189,11 @@ class _EditPostCardState extends State<_EditPostCard> {
                     hintText: 'Insert a Content in here...',
                     alignLabelWithHint: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
                   ),
                 ),
                 const SizedBox(height: 10),
 
-                // Footer : Thumbnail + Buttons (Cancel + Save)
                 Row(
                   children: [
                     Expanded(
@@ -215,11 +205,7 @@ class _EditPostCardState extends State<_EditPostCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.image_outlined,
-                              size: 18,
-                              color: Color(0xFF22B8CF),
-                            ),
+                            const Icon(Icons.image_outlined, size: 18, color: Color(0xFF22B8CF)),
                             const SizedBox(width: 6),
                             Expanded(
                               child: TextField(
@@ -237,38 +223,30 @@ class _EditPostCardState extends State<_EditPostCard> {
                     ),
                     const SizedBox(width: 10),
 
-                    // Cancel
                     SizedBox(
                       height: 40,
                       child: OutlinedButton(
-                        onPressed: hasSaved ? null : () => Navigator.of(context).pop(false),
+                        onPressed: hasSaved
+                            ? null
+                            : () => Navigator.of(context, rootNavigator: true).pop(false), 
                         style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                           side: BorderSide(color: AppColors.frostPrimary.withOpacity(0.4)),
                           foregroundColor: AppColors.frostPrimary,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                         ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
+                        child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                       ),
                     ),
-
                     const SizedBox(width: 10),
 
-                    // Save
                     SizedBox(
                       height: 40,
                       child: ElevatedButton(
                         onPressed: hasSaved ? null : _submit,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 22),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                           backgroundColor: AppColors.frostPrimary,
                           foregroundColor: Colors.white,
                         ),
@@ -281,10 +259,7 @@ class _EditPostCardState extends State<_EditPostCard> {
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'Save',
-                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                              ),
+                            : const Text('Save', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                       ),
                     ),
                   ],
