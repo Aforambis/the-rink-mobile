@@ -23,7 +23,6 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  // --- UPDATED MOCK DATA (Matches new Event model with participant counts) ---
   final List<Event> _featuredEvents = [
     Event(
       id: 1,
@@ -33,7 +32,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       time: '18:00',
       location: 'Main Arena',
       imageUrl: 'https://via.placeholder.com/150',
-      // New required fields
+      // Tambahan field baru biar tidak error
+      price: 150000.0,
+      category: 'Exhibition',
       participantCount: 45,
       maxParticipants: 100,
       isRegistered: false,
@@ -46,7 +47,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       time: '20:00',
       location: 'Rink B',
       imageUrl: 'https://via.placeholder.com/150',
-      // New required fields
+      // Tambahan field baru
+      price: 50000.0,
+      category: 'Recreation',
       participantCount: 12,
       maxParticipants: 50,
       isRegistered: false,
@@ -59,7 +62,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       time: '22:00',
       location: 'Grand Hall',
       imageUrl: 'https://via.placeholder.com/150',
-      // New required fields
+      // Tambahan field baru
+      price: 250000.0,
+      category: 'Gala',
       participantCount: 150,
       maxParticipants: 200,
       isRegistered: false,
@@ -130,7 +135,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   void _onNavTap(int index) {
-    // Check if user is trying to access restricted tabs
     if (!context.read<CookieRequest>().loggedIn && (index == 1 || index == 2)) {
       _showAuthModal();
       return;
@@ -149,7 +153,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       builder: (context) => AuthModalSheet(
         onGoogleSignIn: () {
           Navigator.pop(context);
-          // Mock Google sign-in - in real app, handle actual login
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Google sign-in not implemented yet.'),
@@ -209,7 +212,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           isLoggedIn: context.read<CookieRequest>().loggedIn,
           onSignOut: () async {
             final request = context.read<CookieRequest>();
-            await request.logout("http://localhost:8000/auth_mob/logout/");
+            // Update URL logout sesuai server kamu (localhost/10.0.2.2/deploy url)
+            await request.logout("http://10.0.2.2:8000/auth_mob/logout/");
             setState(() {
               _selectedIndex = 0;
             });
@@ -227,7 +231,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the CookieRequest provider to get login state
     final request = context.watch<CookieRequest>();
 
     return Scaffold(

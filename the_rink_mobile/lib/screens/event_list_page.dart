@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:the_rink_mobile/models/event.dart'; // Correct import
+import '../models/event.dart';
+import 'event_detail_page.dart';
 
 class EventListPage extends StatefulWidget {
   const EventListPage({super.key});
@@ -11,15 +12,21 @@ class EventListPage extends StatefulWidget {
 }
 
 class _EventListPageState extends State<EventListPage> {
-  // Use 10.0.2.2 for Android Emulator
-  final String baseUrl = "http://10.0.2.2:8000"; 
+  // Gunakan 127.0.0.1 karena kamu pakai iOS Simulator
+  final String baseUrl = "https://angga-tri41-therink.pbp.cs.ui.ac.id";
 
   Future<List<Event>> fetchEvents(CookieRequest request) async {
     final response = await request.get('$baseUrl/events/api/list/');
-    
+
     List<Event> listEvents = [];
     for (var d in response) {
       if (d != null) {
+        // Fix URL image jika relative (sama seperti di EventService)
+        if (d['image_url'] != null && d['image_url'].toString().isNotEmpty) {
+          if (!d['image_url'].toString().startsWith('http')) {
+            d['image_url'] = "$baseUrl${d['image_url']}";
+          }
+        }
         listEvents.add(Event.fromJson(d));
       }
     }
@@ -31,7 +38,7 @@ class _EventListPageState extends State<EventListPage> {
     final request = context.watch<CookieRequest>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Events")),
+      appBar: AppBar(title: const Text("All Events")),
       body: FutureBuilder<List<Event>>(
         future: fetchEvents(request),
         builder: (context, snapshot) {
@@ -46,11 +53,17 @@ class _EventListPageState extends State<EventListPage> {
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 final event = snapshot.data![index];
-                
+
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: ListTile(
-                    title: Text(event.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(
+                      event.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -58,23 +71,27 @@ class _EventListPageState extends State<EventListPage> {
                         Text(
                           "Participants: ${event.participantCount} / ${event.maxParticipants}",
                           style: TextStyle(
-                            color: event.participantCount >= event.maxParticipants 
-                                ? Colors.red 
-                                : Colors.grey[600]
+                            color:
+                                event.participantCount >= event.maxParticipants
+                                ? Colors.red
+                                : Colors.grey[600],
                           ),
                         ),
                       ],
                     ),
-                    trailing: event.isRegistered 
-                        ? const Icon(Icons.check_circle, color: Colors.green, size: 30) // Registered
-                        : ElevatedButton( // Join Button
-                            onPressed: event.participantCount >= event.maxParticipants 
-                                ? null // Disable if full
-                                : () {
-                                    // Handle join logic here
-                                  },
-                            child: const Text("Join"),
+                    trailing: ElevatedButton(
+                      onPressed: () {
+                        // PERBAIKAN DI SINI:
+                        // Kita pass object 'event', bukan 'eventId'
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EventDetailPage(event: event),
                           ),
+                        );
+                      },
+                      child: const Text("See Details"),
+                    ),
                   ),
                 );
               },

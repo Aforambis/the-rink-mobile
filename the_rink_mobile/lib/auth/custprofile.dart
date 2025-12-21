@@ -3,6 +3,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../widgets/profile_menu_item.dart';
 import '../theme/app_theme.dart';
+import '../screens/my_events_screen.dart'; // Pastikan import ini ada
 
 class ProfileScreen extends StatefulWidget {
   final bool isLoggedIn;
@@ -37,7 +38,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _fetchUserData() async {
     final request = context.read<CookieRequest>();
     try {
-      final response = await request.get('http://localhost:8000/auth_mob/user/');
+      // Gunakan 127.0.0.1 untuk iOS Simulator agar konsisten
+      final response = await request.get(
+        'http://127.0.0.1:8000/auth_mob/user/',
+      );
       if (response != null && mounted) {
         setState(() {
           _userData = response;
@@ -73,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: Container(
         decoration: WinterTheme.pageBackground(),
-        child: widget.isLoggedIn // ini cek apakah user sudah login, nanti benerin lagi
+        child: widget.isLoggedIn
             ? _buildLoggedInView(context)
             : _buildGuestView(context),
       ),
@@ -82,9 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildLoggedInView(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     final username = _userData?['username'] ?? 'User';
@@ -94,6 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           const SizedBox(height: 24),
+          // Avatar Section
           Container(
             width: 100,
             height: 100,
@@ -119,6 +122,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: TextStyle(fontSize: 14, color: AppColors.mutedText),
           ),
           const SizedBox(height: 24),
+
+          // --- MENU ITEMS ---
+
+          // 1. My Events (Menu Baru)
+          ProfileMenuItem(
+            icon: Icons.calendar_today,
+            title: 'My Events',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyEventsScreen()),
+              );
+            },
+          ),
+
+          // 2. Menu lainnya
           ProfileMenuItem(
             icon: Icons.history,
             title: 'Booking History',
@@ -144,7 +163,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: 'Help & Support',
             onTap: () {},
           ),
+
           const SizedBox(height: 16),
+
+          // Sign Out Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SizedBox(
@@ -184,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: AppColors.frostedGlass,
                 boxShadow: AppColors.softDropShadow,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.person_outline,
                 size: 60,
                 color: AppColors.mutedText,
@@ -198,7 +220,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Sign in to access your profile, bookings, and more',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: AppColors.mutedText),
