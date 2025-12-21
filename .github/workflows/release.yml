@@ -39,11 +39,13 @@ jobs:
 
       - name: Get packages
         run: flutter pub get
+        working-directory: ./the_rink_mobile
 
       - name: Build APK
         run: flutter build apk --split-per-abi
+        working-directory: ./the_rink_mobile
 
-      - name: Decode Keystore
+      - name: Decodse Keystore
         run: echo "${{ secrets.KEY_JKS }}" | base64 -d > release-keystore.jks
 
       - name: Sign APKs
