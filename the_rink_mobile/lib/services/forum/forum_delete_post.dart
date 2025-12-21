@@ -51,7 +51,7 @@ Future<bool> showDeletePostDialog(BuildContext context, Post post) async {
 
   try {
     final response = await request.postJson(
-      'http://localhost:8000/forum/delete-post-flutter/${post.id}/',
+      'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/delete-post-flutter/${post.id}/',
       jsonEncode({}),
     );
 

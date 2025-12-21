@@ -107,7 +107,7 @@ class _EditPostCardState extends State<_EditPostCard> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.postJson(
-        'http://localhost:8000/forum/edit-post-flutter/${widget.postId}/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/edit-post-flutter/${widget.postId}/',
         jsonEncode({
           'title': title,
           'content': content,

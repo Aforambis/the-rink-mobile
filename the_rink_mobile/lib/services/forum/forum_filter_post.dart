@@ -3,7 +3,7 @@ import '../../models/forum.dart';
 
 class PostFilter {
   Future<List<Post>> fetchPosts(CookieRequest request) async {
-    final response = await request.get('http://localhost:8000/forum/json/');
+    final response = await request.get('https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/json/');
 
     final List<Post> listPost = [];
     for (final data in response) {

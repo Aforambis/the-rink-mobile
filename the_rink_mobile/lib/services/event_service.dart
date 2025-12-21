@@ -3,8 +3,7 @@ import '../models/event.dart';
 
 class EventService {
   // Use 10.0.2.2 for Android Emulator, localhost for iOS simulator
-  final String baseUrl =
-      "https://angga-tri41-therink.pbp.cs.ui.ac.id/events/api";
+  final String baseUrl = "https://angga-tri41-therink.pbp.cs.ui.ac.id/events/api";
   Future<List<Event>> fetchEvents(CookieRequest request) async {
     final response = await request.get('$baseUrl/list/');
 

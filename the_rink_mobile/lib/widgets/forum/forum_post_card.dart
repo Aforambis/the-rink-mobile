@@ -111,7 +111,7 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
   }
 
   String proxiedImageUrl(String url) {
-    return 'http://localhost:8000/forum/proxy-image/?url=${Uri.encodeComponent(url)}';
+    return 'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/proxy-image/?url=${Uri.encodeComponent(url)}';
   }
 
   // Tombol untuk Edit / Delete
@@ -206,7 +206,7 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
     try {
       final request = context.read<CookieRequest>();
       final response = await request.postJson(
-        'http://localhost:8000/forum/toggle-vote-flutter/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/toggle-vote-flutter/',
         jsonEncode({
           'type': 'post',
           'id': post.id,
@@ -446,7 +446,7 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
                         isLoggedIn: widget.isLoggedIn,
                         onReplyVote: widget.onReplyVote,
                         onRequireAuth: _showAuthModal,
-                        baseUrl: 'http://localhost:8000',
+                        baseUrl: 'https://angga-tri41-therink.pbp.cs.ui.ac.id',
                         onAfterReply: null,
                       ),
                     ),

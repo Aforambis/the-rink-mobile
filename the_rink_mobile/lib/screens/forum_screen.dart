@@ -41,7 +41,7 @@ class _ForumScreenState extends State<ForumScreen> {
 
   Future<void> authUser() async {
     final request = context.read<CookieRequest>();
-    final auth = await request.get('http://localhost:8000/forum/auth-person-forum/');
+    final auth = await request.get('https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/auth-person-forum/');
     setState(() {
       userId = auth['user_id'];
     });
@@ -56,7 +56,7 @@ class _ForumScreenState extends State<ForumScreen> {
   late Future<List<Post>> futurePosts;
 
   Future<List<Post>> fetchPosts(CookieRequest request) async {
-    final response = await request.get('http://localhost:8000/forum/json/');
+    final response = await request.get('https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/json/');
     List<Post> listPost = [];
     for (var data in response) {
       if (data != null) {
@@ -67,7 +67,7 @@ class _ForumScreenState extends State<ForumScreen> {
   }
 
   Future<List<Post>> fetchTopPosts(CookieRequest request) async {
-    final response = await request.get('http://localhost:8000/forum/get-top-posts-json-flutter/');
+    final response = await request.get('https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/get-top-posts-json-flutter/');
     List<Post> listPost = [];
     for (var data in response) {
       if (data != null) listPost.add(Post.fromJson(data));
@@ -190,7 +190,7 @@ class _ForumScreenState extends State<ForumScreen> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.postJson(
-        'http://localhost:8000/forum/toggle-vote-flutter/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/toggle-vote-flutter/',
         jsonEncode({
           'type': 'post',
           'id': post.id,
@@ -219,7 +219,7 @@ class _ForumScreenState extends State<ForumScreen> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.postJson(
-        'http://localhost:8000/forum/toggle-vote-flutter/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/toggle-vote-flutter/',
         jsonEncode({
           'type': 'reply',
           'id': reply.id,
@@ -479,7 +479,7 @@ class _ForumScreenState extends State<ForumScreen> {
                             onVote: _handleVote,
                             onReplyVote: _handleReplyVote,
                             onRequireAuth: _showAuthModal,
-                            baseUrl: "http://localhost:8000",
+                            baseUrl: "https://angga-tri41-therink.pbp.cs.ui.ac.id",
                             onAfterAction: reloadPost, 
                           );
                         },

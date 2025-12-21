@@ -206,7 +206,7 @@ class _LeaderboardPostTileState extends State<_LeaderboardPostTile>
     if (imageUrl.contains('/forum/proxy-image/')) return imageUrl;
 
     final encoded = Uri.encodeComponent(imageUrl);
-    return 'http://localhost:8000/forum/proxy-image/?url=$encoded';
+    return 'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/proxy-image/?url=$encoded';
   }
 
   @override

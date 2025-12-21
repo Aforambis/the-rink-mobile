@@ -11,11 +11,8 @@ class EventListPage extends StatefulWidget {
 }
 
 class _EventListPageState extends State<EventListPage> {
-  // Use 10.0.2.2 for Android Emulator
-  final String baseUrl = "http://10.0.2.2:8000"; 
-
   Future<List<Event>> fetchEvents(CookieRequest request) async {
-    final response = await request.get('$baseUrl/events/api/list/');
+    final response = await request.get('https://angga-tri41-therink.pbp.cs.ui.ac.id/events/api/list/');
     
     List<Event> listEvents = [];
     for (var d in response) {

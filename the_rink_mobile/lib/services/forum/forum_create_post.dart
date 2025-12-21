@@ -67,7 +67,7 @@ class _ForumCreatePostCardState extends State<ForumCreatePostCard> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.postJson(
-        'http://localhost:8000/forum/add-post-flutter/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/add-post-flutter/',
         jsonEncode({
           'title': title,
           'content': content,
