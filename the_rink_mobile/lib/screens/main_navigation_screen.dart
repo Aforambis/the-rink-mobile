@@ -150,11 +150,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   void _onNavTap(int index) {
-    if (!context.read<CookieRequest>().loggedIn && (index == 1 || index == 2)) {
-      _showAuthModal();
-      return;
-    }
-
     setState(() {
       _selectedIndex = index;
     });

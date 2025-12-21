@@ -14,6 +14,14 @@ class _AdminGearManagementScreenState extends State<AdminGearManagementScreen> {
   List<Map<String, dynamic>> _gears = [];
   bool _isLoading = true;
 
+  // Edit gear controllers
+  final _editNameController = TextEditingController();
+  final _editPriceController = TextEditingController();
+  final _editStockController = TextEditingController();
+  final _editDescriptionController = TextEditingController();
+  final _editImageUrlController = TextEditingController();
+  String _editCategory = 'hockey';
+
   @override
   void initState() {
     super.initState();
@@ -24,7 +32,7 @@ class _AdminGearManagementScreenState extends State<AdminGearManagementScreen> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/gears/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental_gear/api/admin/gears/',
       );
 
       if (mounted && response != null && response['status'] == true) {
@@ -49,7 +57,7 @@ class _AdminGearManagementScreenState extends State<AdminGearManagementScreen> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.post(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/gears/$gearId/delete/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental_gear/api/delete-gear/$gearId/',
         {}, // Empty body for delete
       );
 
