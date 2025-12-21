@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class AuthModalSheet extends StatelessWidget {
-  final VoidCallback onGoogleSignIn;
   final VoidCallback onUsernamePasswordSignIn;
   final VoidCallback onContinueAsGuest;
 
   const AuthModalSheet({
     super.key,
-    required this.onGoogleSignIn,
     required this.onUsernamePasswordSignIn,
     required this.onContinueAsGuest,
   });
@@ -65,18 +63,6 @@ class AuthModalSheet extends StatelessWidget {
             style: TextStyle(fontSize: 14, color: AppColors.mutedText),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onGoogleSignIn,
-              icon: const Icon(Icons.g_mobiledata, size: 28),
-              label: const Text('Continue with Google'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

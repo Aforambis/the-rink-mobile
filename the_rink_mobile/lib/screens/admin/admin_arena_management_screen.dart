@@ -25,7 +25,7 @@ class _AdminArenaManagementScreenState
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/arenas/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/booking/api/arenas/',
       );
 
       if (mounted && response != null && response['status'] == true) {
@@ -272,7 +272,7 @@ class _AdminArenaManagementScreenState
     final request = context.read<CookieRequest>();
     try {
       final response = await request.post(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/arenas/$arenaId/delete/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/booking/api/delete/$arenaId/',
         {}, // Empty body for delete
       );
 

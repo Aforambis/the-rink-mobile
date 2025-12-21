@@ -35,7 +35,7 @@ class _AdminForumManagementScreenState extends State<AdminForumManagementScreen>
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/posts/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/api/admin/posts/',
       );
 
       if (mounted && response != null && response['status'] == true) {
@@ -56,7 +56,7 @@ class _AdminForumManagementScreenState extends State<AdminForumManagementScreen>
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/replies/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/api/admin/replies/',
       );
 
       if (mounted && response != null && response['status'] == true) {
@@ -81,7 +81,7 @@ class _AdminForumManagementScreenState extends State<AdminForumManagementScreen>
     final request = context.read<CookieRequest>();
     try {
       final response = await request.post(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/posts/$postId/delete/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/api/admin/posts/$postId/delete/',
         {}, // Empty body for delete
       );
 
@@ -102,7 +102,7 @@ class _AdminForumManagementScreenState extends State<AdminForumManagementScreen>
     final request = context.read<CookieRequest>();
     try {
       final response = await request.post(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/replies/$replyId/delete/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/api/admin/replies/$replyId/delete/',
         {}, // Empty body for delete
       );
 

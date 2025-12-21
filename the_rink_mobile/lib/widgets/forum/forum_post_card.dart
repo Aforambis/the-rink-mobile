@@ -12,9 +12,9 @@ import '../../models/forum.dart';
 class ForumPostCard extends StatefulWidget {
   final Post post;
   final bool isLoggedIn;
-  final bool canEdit;    
-  final VoidCallback? onEdit;    
-  final VoidCallback? onDelete;     
+  final bool canEdit;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
   final Future<void> Function(Reply reply, bool isUpvote) onReplyVote;
 
   const ForumPostCard({
@@ -31,7 +31,8 @@ class ForumPostCard extends StatefulWidget {
   State<ForumPostCard> createState() => _ForumPostCardState();
 }
 
-class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProviderStateMixin {
+class _ForumPostCardState extends State<ForumPostCard>
+    with SingleTickerProviderStateMixin {
   late TextEditingController _replyController;
   late FocusNode _replyFocusNode;
   late AnimationController repliesController;
@@ -54,7 +55,7 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
       parent: repliesController,
       curve: Curves.easeInOut,
     );
-     _replyController = TextEditingController();
+    _replyController = TextEditingController();
     _replyFocusNode = FocusNode();
   }
 
@@ -80,8 +81,7 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
   Widget buildThumbnail() {
     final String rawUrl = widget.post.thumbnailUrl;
     final imgUrl = proxiedImageUrl(rawUrl);
-    return 
-    ClipRRect(
+    return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: 80,
@@ -149,50 +149,47 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
     );
   }
 
-  Widget buildVote(
-    {
+  Widget buildVote({
     required IconData icon,
     required Color color,
     required Color background,
     required int count,
     required VoidCallback onTap,
-    }) 
-    {
-    return 
-      InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 4),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(999),
         ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
-  
+
   bool get isLoggedIn {
     final request = context.read<CookieRequest>();
     return request.loggedIn;
   }
 
   Future<void> handleVote(Post post, bool isUpvote) async {
-    if (isVoting) return; 
+    if (isVoting) return;
 
     if (!isLoggedIn) {
       _showAuthModal();
@@ -200,37 +197,38 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
     }
 
     setState(() {
-      isVoting = true;         
+      isVoting = true;
     });
 
     try {
       final request = context.read<CookieRequest>();
-      final response = await request.postJson(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/toggle-vote-flutter/',
-        jsonEncode({
-          'type': 'post',
-          'id': post.id,
-          'is_upvote': isUpvote,
-        }),
-      ) as Map<String, dynamic>;
+      final response =
+          await request.postJson(
+                'https://angga-tri41-therink.pbp.cs.ui.ac.id/forum/toggle-vote-flutter/',
+                jsonEncode({
+                  'type': 'post',
+                  'id': post.id,
+                  'is_upvote': isUpvote,
+                }),
+              )
+              as Map<String, dynamic>;
 
       setState(() {
-        post.upvotesCount  = (response['upvotes']  ?? post.upvotesCount)  as int;
-        post.downvotesCount = (response['downvotes'] ?? post.downvotesCount) as int;
+        post.upvotesCount = (response['upvotes'] ?? post.upvotesCount) as int;
+        post.downvotesCount =
+            (response['downvotes'] ?? post.downvotesCount) as int;
       });
-    } 
-    catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to vote: $e')),
-      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to vote: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isVoting = false;
+        });
+      }
     }
-    finally {
-    if (mounted) {
-      setState(() {
-        isVoting = false;      
-      });
-    }
-  }
   }
 
   void _showAuthModal() {
@@ -239,17 +237,6 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AuthModalSheet(
-        onGoogleSignIn: () {
-          Navigator.pop(context);
-          // Mock Google sign-in - in real app, handle actual login
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google sign-in not implemented yet.'),
-              backgroundColor: AppColors.frostPrimary,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
         onUsernamePasswordSignIn: () {
           Navigator.pop(context);
           Navigator.push(
@@ -267,8 +254,18 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
   String formatDate(DateTime dt) {
     final d = dt.toLocal();
     const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final mm = monthNames[d.month - 1];
     return '$mm ${d.day}, ${d.year}';
@@ -292,7 +289,6 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // ===== HEADER =====
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,7 +299,6 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       // Tanggal Rilis Post
                       Align(
                         alignment: Alignment.centerRight,
@@ -330,7 +325,7 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
                       // Content
                       const SizedBox(height: 4),
                       Text(
-                        post.content,       
+                        post.content,
                         style: const TextStyle(
                           fontSize: 13,
                           height: 1.4,
@@ -428,17 +423,14 @@ class _ForumPostCardState extends State<ForumPostCard> with SingleTickerProvider
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFE5F2FF),
-                            Colors.white,
-                          ],
+                          colors: [Color(0xFFE5F2FF), Colors.white],
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
-                          )
+                          ),
                         ],
                       ),
                       child: ForumRepliesPanel(

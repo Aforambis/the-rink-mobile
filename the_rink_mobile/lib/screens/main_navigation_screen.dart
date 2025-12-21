@@ -150,11 +150,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   void _onNavTap(int index) {
-    if (!context.read<CookieRequest>().loggedIn && (index == 1 || index == 2)) {
-      _showAuthModal();
-      return;
-    }
-
     setState(() {
       _selectedIndex = index;
     });
@@ -166,16 +161,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AuthModalSheet(
-        onGoogleSignIn: () {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google sign-in not implemented yet.'),
-              backgroundColor: AppColors.frostPrimary,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
         onUsernamePasswordSignIn: () {
           Navigator.pop(context);
           Navigator.push(

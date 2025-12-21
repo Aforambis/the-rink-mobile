@@ -98,7 +98,7 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
     final request = context.read<CookieRequest>();
     try {
       final response = await request.get(
-        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental/gear/json/',
+        'https://angga-tri41-therink.pbp.cs.ui.ac.id/rental_gear/api/flutter/seller/gears/',
       );
       print('Products API Response: $response'); // Debug logging
       if (response != null && mounted) {
@@ -160,7 +160,7 @@ class _FullProfileScreenState extends State<FullProfileScreen> {
 
       if (_userType == 'seller') {
         await request.post(
-          'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/seller-profile/update/',
+          'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth/seller-profile/update/',
           {
             'business_name': _businessNameController.text.trim(),
             'phone_number': _phoneController.text.trim(),

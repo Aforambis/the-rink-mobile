@@ -218,9 +218,191 @@ class _AdminEventManagementScreenState
   }
 
   Future<void> _updateEvent(Map<String, dynamic> event) async {
-    // Similar to create but with pre-filled values
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Event editing not implemented yet')),
+    final nameController = TextEditingController(text: event['name']);
+    final descriptionController = TextEditingController(
+      text: event['description'],
+    );
+    final locationController = TextEditingController(text: event['location']);
+    final organizerController = TextEditingController(
+      text: event['organizer'] ?? '',
+    );
+    final instructorController = TextEditingController(
+      text: event['instructor'] ?? '',
+    );
+    final requirementsController = TextEditingController(
+      text: event['requirements'] ?? '',
+    );
+    final priceController = TextEditingController(
+      text: event['price'].toString(),
+    );
+    final maxParticipantsController = TextEditingController(
+      text: event['max_participants'].toString(),
+    );
+
+    String selectedCategory = event['category'];
+    String selectedLevel = event['level'];
+    DateTime selectedDate = DateTime.parse(event['date']);
+    TimeOfDay selectedStartTime = TimeOfDay(
+      hour: int.parse(event['start_time'].split(':')[0]),
+      minute: int.parse(event['start_time'].split(':')[1]),
+    );
+    TimeOfDay selectedEndTime = TimeOfDay(
+      hour: int.parse(event['end_time'].split(':')[0]),
+      minute: int.parse(event['end_time'].split(':')[1]),
+    );
+    bool isActive = event['is_active'];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Event'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Name *'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: 'Description *'),
+                maxLines: 3,
+              ),
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: const InputDecoration(labelText: 'Category *'),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'competition',
+                    child: Text('Competition'),
+                  ),
+                  DropdownMenuItem(value: 'workshop', child: Text('Workshop')),
+                  DropdownMenuItem(
+                    value: 'social',
+                    child: Text('Social Event'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'training',
+                    child: Text('Training Session'),
+                  ),
+                ],
+                onChanged: (value) => selectedCategory = value!,
+              ),
+              DropdownButtonFormField<String>(
+                value: selectedLevel,
+                decoration: const InputDecoration(labelText: 'Level *'),
+                items: const [
+                  DropdownMenuItem(value: 'beginner', child: Text('Beginner')),
+                  DropdownMenuItem(
+                    value: 'intermediate',
+                    child: Text('Intermediate'),
+                  ),
+                  DropdownMenuItem(value: 'advanced', child: Text('Advanced')),
+                  DropdownMenuItem(value: 'all', child: Text('All Levels')),
+                ],
+                onChanged: (value) => selectedLevel = value!,
+              ),
+              TextField(
+                controller: locationController,
+                decoration: const InputDecoration(labelText: 'Location *'),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(labelText: 'Price *'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: maxParticipantsController,
+                decoration: const InputDecoration(
+                  labelText: 'Max Participants *',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: organizerController,
+                decoration: const InputDecoration(labelText: 'Organizer'),
+              ),
+              TextField(
+                controller: instructorController,
+                decoration: const InputDecoration(labelText: 'Instructor'),
+              ),
+              TextField(
+                controller: requirementsController,
+                decoration: const InputDecoration(labelText: 'Requirements'),
+                maxLines: 2,
+              ),
+              // Date and Time pickers would be added here
+              SwitchListTile(
+                title: const Text('Active'),
+                value: isActive,
+                onChanged: (value) => isActive = value,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isEmpty ||
+                  descriptionController.text.isEmpty ||
+                  locationController.text.isEmpty ||
+                  priceController.text.isEmpty ||
+                  maxParticipantsController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please fill all required fields'),
+                  ),
+                );
+                return;
+              }
+
+              final request = context.read<CookieRequest>();
+              try {
+                final response = await request.post(
+                  'https://angga-tri41-therink.pbp.cs.ui.ac.id/auth_mob/admin/events/${event['id']}/update/',
+                  {
+                    'name': nameController.text,
+                    'description': descriptionController.text,
+                    'category': selectedCategory,
+                    'level': selectedLevel,
+                    'location': locationController.text,
+                    'price': double.tryParse(priceController.text) ?? 0,
+                    'max_participants':
+                        int.tryParse(maxParticipantsController.text) ?? 30,
+                    'organizer': organizerController.text,
+                    'instructor': instructorController.text,
+                    'requirements': requirementsController.text,
+                    'date': selectedDate.toIso8601String().split('T')[0],
+                    'start_time':
+                        '${selectedStartTime.hour.toString().padLeft(2, '0')}:${selectedStartTime.minute.toString().padLeft(2, '0')}',
+                    'end_time':
+                        '${selectedEndTime.hour.toString().padLeft(2, '0')}:${selectedEndTime.minute.toString().padLeft(2, '0')}',
+                    'is_active': isActive,
+                  },
+                );
+
+                if (response != null && response['status'] == true) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Event updated successfully')),
+                  );
+                  Navigator.of(context).pop();
+                  _fetchEvents();
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to update event')),
+                );
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
     );
   }
 
