@@ -48,7 +48,7 @@ Widget buildGearImage(
           color: AppColors.frostPrimary,
           value: loadingProgress.expectedTotalBytes != null
               ? loadingProgress.cumulativeBytesLoaded /
-                    loadingProgress.expectedTotalBytes!
+                  loadingProgress.expectedTotalBytes!
               : null,
         ),
       );
@@ -73,11 +73,10 @@ Widget _buildGearPlaceholder(double iconSize) {
   );
 }
 
-/// Format number to Indonesian Rupiah format (converted from USD)
-String _formatRupiah(double usdAmount) {
-  // Convert USD to IDR (rate: 1 USD = 15,500 IDR)
-  double idrAmount = usdAmount * 15500;
-  String price = idrAmount.toStringAsFixed(0);
+/// Format number to Indonesian Rupiah format
+String _formatRupiah(double amount) {
+  // Harga sudah dalam Rupiah, langsung format
+  String price = amount.toStringAsFixed(0);
   String result = "";
   int count = 0;
   for (int i = price.length - 1; i >= 0; i--) {
@@ -218,8 +217,8 @@ class _GearRentalScreenState extends State<GearRentalScreen>
             (gear) =>
                 gear.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                 gear.description.toLowerCase().contains(
-                  _searchQuery.toLowerCase(),
-                ),
+                      _searchQuery.toLowerCase(),
+                    ),
           )
           .toList();
     }
@@ -677,20 +676,19 @@ class _GearRentalScreenState extends State<GearRentalScreen>
                   ),
                 ),
                 child: SlideTransition(
-                  position:
-                      Tween<Offset>(
-                        begin: const Offset(0, 0.2),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: _animationController,
-                          curve: Interval(
-                            (index / _filteredGears.length) * 0.5,
-                            ((index + 1) / _filteredGears.length) * 0.5 + 0.5,
-                            curve: Curves.easeOut,
-                          ),
-                        ),
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.2),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: _animationController,
+                      curve: Interval(
+                        (index / _filteredGears.length) * 0.5,
+                        ((index + 1) / _filteredGears.length) * 0.5 + 0.5,
+                        curve: Curves.easeOut,
                       ),
+                    ),
+                  ),
                   child: child,
                 ),
               );
@@ -1454,18 +1452,17 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                    builder: (context) => CartScreen(
+                                                    builder: (context) =>
+                                                        CartScreen(
                                                       items: cartService.items
                                                           .map(
                                                             (item) =>
                                                                 CartItemPreview(
-                                                                  gear:
-                                                                      item.gear,
-                                                                  quantity: item
-                                                                      .quantity,
-                                                                  days:
-                                                                      item.days,
-                                                                ),
+                                                              gear: item.gear,
+                                                              quantity:
+                                                                  item.quantity,
+                                                              days: item.days,
+                                                            ),
                                                           )
                                                           .toList(),
                                                     ),
@@ -1489,7 +1486,7 @@ class _GearDetailSheetState extends State<_GearDetailSheet>
                                         gear.stock > 0
                                             ? Icons.shopping_cart_rounded
                                             : Icons
-                                                  .remove_shopping_cart_rounded,
+                                                .remove_shopping_cart_rounded,
                                         color: gear.stock > 0
                                             ? Colors.white
                                             : Colors.grey[600],

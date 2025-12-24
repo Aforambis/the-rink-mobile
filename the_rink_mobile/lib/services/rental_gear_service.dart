@@ -39,7 +39,7 @@ class RentalGearService {
           "id": 1,
           "name": "Pro Hockey Stick",
           "category": "hockey",
-          "price_per_day": 12.5,
+          "price_per_day": 50000,
           "stock": 4,
           "description":
               "Lightweight carbon fiber stick for power shots. Perfect for professionals and enthusiasts alike.",
@@ -53,7 +53,7 @@ class RentalGearService {
           "id": 2,
           "name": "Junior Hockey Stick",
           "category": "hockey",
-          "price_per_day": 8.0,
+          "price_per_day": 35000,
           "stock": 6,
           "description":
               "Designed for younger players, lightweight and easy to handle.",
@@ -67,7 +67,7 @@ class RentalGearService {
           "id": 3,
           "name": "Protective Helmet",
           "category": "protective_gear",
-          "price_per_day": 8.0,
+          "price_per_day": 35000,
           "stock": 7,
           "description":
               "Certified helmet with adjustable straps. Maximum protection for ice sports.",
@@ -81,7 +81,7 @@ class RentalGearService {
           "id": 4,
           "name": "Knee Pads Set",
           "category": "protective_gear",
-          "price_per_day": 5.0,
+          "price_per_day": 25000,
           "stock": 10,
           "description":
               "Comfortable knee pads with shock absorption technology.",
@@ -95,7 +95,7 @@ class RentalGearService {
           "id": 5,
           "name": "Elbow Guards",
           "category": "protective_gear",
-          "price_per_day": 4.5,
+          "price_per_day": 20000,
           "stock": 8,
           "description": "Lightweight elbow protection for all skill levels.",
           "image_url":
@@ -108,7 +108,7 @@ class RentalGearService {
           "id": 6,
           "name": "Ice Skates Pro (Size 42)",
           "category": "ice_skating",
-          "price_per_day": 15.0,
+          "price_per_day": 75000,
           "stock": 5,
           "description": "Professional-grade skates, freshly sharpened blades.",
           "image_url":
@@ -121,7 +121,7 @@ class RentalGearService {
           "id": 7,
           "name": "Ice Skates Standard (Size 40)",
           "category": "ice_skating",
-          "price_per_day": 10.0,
+          "price_per_day": 50000,
           "stock": 0,
           "description": "Comfort-fit skates, great for beginners.",
           "image_url":
@@ -134,7 +134,7 @@ class RentalGearService {
           "id": 8,
           "name": "Ice Skates Kids (Size 35)",
           "category": "ice_skating",
-          "price_per_day": 8.0,
+          "price_per_day": 40000,
           "stock": 4,
           "description": "Perfect for young skaters, comfortable and safe.",
           "image_url":
@@ -147,7 +147,7 @@ class RentalGearService {
           "id": 9,
           "name": "Skate Bag",
           "category": "other",
-          "price_per_day": 3.0,
+          "price_per_day": 15000,
           "stock": 15,
           "description": "Durable bag for carrying skates and accessories.",
           "image_url":
@@ -160,7 +160,7 @@ class RentalGearService {
           "id": 10,
           "name": "Blade Guards",
           "category": "other",
-          "price_per_day": 2.0,
+          "price_per_day": 10000,
           "stock": 20,
           "description": "Protect your blades when off the ice.",
           "image_url":

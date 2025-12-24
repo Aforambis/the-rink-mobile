@@ -18,11 +18,10 @@ class CartItemPreview {
 // Global cart service instance
 final cartService = CartService();
 
-/// Format number to Indonesian Rupiah format (converted from USD)
-String _formatRupiah(double usdAmount) {
-  // Convert USD to IDR (rate: 1 USD = 15,500 IDR)
-  double idrAmount = usdAmount * 15500;
-  String price = idrAmount.toStringAsFixed(0);
+/// Format number to Indonesian Rupiah format
+String _formatRupiah(double amount) {
+  // Harga sudah dalam Rupiah, langsung format
+  String price = amount.toStringAsFixed(0);
   String result = "";
   int count = 0;
   for (int i = price.length - 1; i >= 0; i--) {
@@ -130,9 +129,9 @@ class _CartScreenState extends State<CartScreen> {
           decoration: const BoxDecoration(gradient: AppColors.auroraGradient),
         ),
         titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           if (items.isNotEmpty)
@@ -237,7 +236,9 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               Text(
                                 'Rp ${_formatRupiah(totalPrice)}',
-                                style: Theme.of(context).textTheme.titleLarge
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
                                     ?.copyWith(
                                       color: AppColors.frostPrimary,
                                       fontWeight: FontWeight.w800,
@@ -342,8 +343,8 @@ class _CartItemCard extends StatelessWidget {
                     Text(
                       item.gear.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                            fontWeight: FontWeight.w700,
+                          ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -359,9 +360,9 @@ class _CartItemCard extends StatelessWidget {
                     Text(
                       'Subtotal: Rp ${_formatRupiah(item.subtotal)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.frostPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: AppColors.frostPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -440,9 +441,8 @@ class _QuantitySelector extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: value > 1
-                        ? AppColors.frostPrimary
-                        : Colors.grey[300],
+                    color:
+                        value > 1 ? AppColors.frostPrimary : Colors.grey[300],
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
@@ -467,9 +467,8 @@ class _QuantitySelector extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: value < max
-                        ? AppColors.frostPrimary
-                        : Colors.grey[300],
+                    color:
+                        value < max ? AppColors.frostPrimary : Colors.grey[300],
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(
@@ -588,10 +587,9 @@ class _CartPaymentModalContentState extends State<_CartPaymentModalContent> {
   String? selectedMethod;
   bool isProcessing = false;
 
-  String formatCurrency(double usdAmount) {
-    // Convert USD to IDR (rate: 1 USD = 15,500 IDR)
-    double idrAmount = usdAmount * 15500;
-    String price = idrAmount.toStringAsFixed(0);
+  String formatCurrency(double amount) {
+    // Harga sudah dalam Rupiah, langsung format
+    String price = amount.toStringAsFixed(0);
     String result = "";
     int count = 0;
     for (int i = price.length - 1; i >= 0; i--) {
